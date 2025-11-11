@@ -5,305 +5,221 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Registro de Propinas · Las Piconas</title>
 
-<!-- Librerías (CDN): jsPDF, autoTable, JsBarcode -->
+<!-- Librerías CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
 
 <style>
+/* ===========================
+   Estética empresarial + animaciones sutiles
+   =========================== */
 :root{
-  --bg:#071018;
-  --panel: rgba(255,255,255,0.03);
-  --accent:#00e676;
-  --accent-2:#00bfa5;
-  --muted:rgba(255,255,255,0.06);
-  --glass: rgba(255,255,255,0.03);
-  --danger:#ff5252;
-  --card-radius:14px;
+  --bg:#0b1220;
+  --panel: rgba(255,255,255,0.02);
+  --accent:#117a8b;
+  --accent-2:#0fa3a3;
+  --muted:#9fb3b3;
+  --glass: rgba(255,255,255,0.02);
+  --card-radius:12px;
   --mono: "Courier New", monospace;
 }
 
 *{box-sizing:border-box}
 body{
   margin:0;
-  min-height:100vh;
-  font-family:Inter, "Poppins", Arial, sans-serif;
-  background: linear-gradient(180deg,#071018 0%, #071826 60%), url('FONDO PARA LISTA.jpg') center/cover no-repeat;
-  color:#e9fff3;
+  font-family:"Inter", "Poppins", Arial, sans-serif;
+  color:#e6f6f6;
+  background: linear-gradient(180deg, #071018 0%, #071827 100%);
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
+  -webkit-touch-callout:none;
 }
 
-/* Top header */
+/* header */
 .header{
-  display:flex;
-  align-items:center;
-  gap:18px;
-  padding:18px 26px;
-  background: rgba(0,0,0,0.6);
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  display:flex; align-items:center; gap:16px;
+  padding:18px 24px; background:rgba(255,255,255,0.02);
+  border-bottom:1px solid rgba(255,255,255,0.02);
 }
-.logo-wrap{ display:flex; align-items:center; gap:12px; }
-.logo-wrap img{ width:120px; height:auto; object-fit:contain; border-radius:10px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); }
-.header h1{ margin:0; font-size:1.25rem; color:var(--accent); text-shadow:0 6px 24px rgba(0,230,118,0.06); }
-.header .right{ margin-left:auto; display:flex; gap:12px; align-items:center; }
+.logo-wrap img{ width:110px; height:auto; object-fit:contain; border-radius:8px; }
+.header h1{ margin:0; font-size:1.2rem; color:var(--accent); font-weight:700; }
 
 /* container */
-.app{
-  max-width:1100px;
-  margin:28px auto;
-  padding:22px;
-  background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.45));
-  border-radius: var(--card-radius);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.03);
+.container{ max-width:1100px; margin:28px auto; padding:20px; border-radius:var(--card-radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  border:1px solid rgba(255,255,255,0.02);
 }
 
 /* form */
-.form{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  align-items:center;
-  margin-bottom:14px;
-}
-.input, select, button{
-  padding:10px 12px;
-  border-radius:8px;
-  border: none;
-  font-size:1rem;
-}
-.input{ background:var(--glass); color:#e9fff3; min-width:180px; }
-.select{ background:var(--glass); color:#e9fff3; min-width:160px; }
-
-.btn{
-  background:linear-gradient(180deg,var(--accent),var(--accent-2));
-  color:#002217; font-weight:700; cursor:pointer;
-  box-shadow: 0 8px 24px rgba(0,230,118,0.08);
-}
-.btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--accent); }
+.form{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+.input, .select, .btn{ padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); background:var(--glass); color:#e6f6f6; }
+.input:focus, .select:focus { outline:none; box-shadow: 0 8px 24px rgba(15,163,163,0.07); transform:translateY(-1px); }
+.btn{ cursor:pointer; background:linear-gradient(180deg,var(--accent),var(--accent-2)); color:#042; font-weight:700; border:none; }
 
 /* grid */
-.grid{
-  display:grid;
-  grid-template-columns: 1fr 360px;
-  gap:18px;
-  align-items:start;
-}
+.grid{ display:grid; grid-template-columns: 1fr 360px; gap:18px; align-items:start; }
 
-/* left panel - table of entries */
-.card{
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
-  border-radius:12px;
-  padding:14px;
-  border:1px solid rgba(255,255,255,0.02);
-}
-.table-wrap{ overflow:auto; max-height:460px; margin-top:8px; }
+/* cards */
+.card{ background:transparent; padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); }
+.table-wrap{ max-height:480px; overflow:auto; margin-top:8px; border-radius:8px; }
+
+/* table */
 table{ width:100%; border-collapse:collapse; font-size:0.95rem; }
-thead th{ text-align:left; padding:10px; color:var(--accent); font-weight:800; background:rgba(0,0,0,0.2); position:sticky; top:0; }
-tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.03); color:#e6fff0; }
+thead th{ position:sticky; top:0; background:rgba(0,0,0,0.2); padding:10px; color:var(--accent); text-align:left; font-weight:700; }
+tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6f6; vertical-align:middle; }
 .row-actions button{ margin-right:6px; }
 
-/* right panel - controls */
-.side{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.kpi{
-  display:flex;
-  gap:12px;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px;
-  border-radius:10px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.25), rgba(0,0,0,0.2));
-  border:1px solid rgba(255,255,255,0.02);
-}
-.kpi strong{ display:block; color:var(--accent); font-size:1.2rem; }
-.small{ font-size:0.86rem; color: rgba(255,255,255,0.7); }
+/* right panel */
+.side{ display:flex; flex-direction:column; gap:12px; }
+.kpi{ padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.02); }
+.kpi strong{ color:var(--accent); font-size:1.1rem; }
 
-/* saved days list */
-.saved-days{ display:flex; flex-wrap:wrap; gap:8px; padding:8px; }
-.saved-days button{ padding:8px 10px; background:transparent; border:1px solid rgba(255,255,255,0.04); border-radius:8px; color:var(--accent); cursor:pointer; }
-
-/* footer controls */
-.footer{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  margin-top:12px;
-}
-
-/* modal */
-.modal-backdrop{
-  position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9999;
-}
-.modal{ width:520px; max-width:94%; background:#071018; padding:18px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); }
+/* saved days */
+.saved-days{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.saved-days button{ padding:8px 10px; background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); border-radius:8px; cursor:pointer; }
 
 /* barcode canvas */
-#barcodeCanvas{ display:block; margin:10px auto; }
+#barcodeCanvas{ display:block; margin-top:8px; max-width:100%; height:70px; }
+
+/* subtle animations */
+.fade-in{ animation: fadeInUp .34s ease both; }
+@keyframes fadeInUp{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
+.btn:hover{ transform: translateY(-3px); box-shadow: 0 10px 30px rgba(10,120,120,0.08); }
+
+/* modal */
+.modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999; }
+.modal{ width:520px; max-width:94%; background:#071018; padding:18px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); }
 
 /* responsive */
-@media(max-width:980px){
-  .grid{ grid-template-columns:1fr; }
-  .header h1{font-size:1rem;}
-  .logo-wrap img{ width:92px; }
-}
+@media(max-width:980px){ .grid{ grid-template-columns: 1fr; } .logo-wrap img{ width:92px; } }
 </style>
 </head>
 <body>
-
-<!-- HEADER -->
-<div class="header">
-  <div class="logo-wrap">
-    <img src="LOGO1.png" alt="Logo" id="logo1">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-wrap">
+      <img src="LOGO1.png" alt="LOGO1" id="logo1">
+    </div>
     <div>
       <h1>Registro de Propinas · Las Piconas</h1>
-      <div class="small" style="margin-top:6px">Sistema profesional · Tickets con comprobante y código de barras</div>
+      <div style="font-size:0.86rem; color:var(--muted)">Sistema profesional — tickets con comprobante y código de barras</div>
     </div>
-  </div>
-  <div class="right">
-    <div id="nowLabel" style="font-family:var(--mono); color:var(--accent)"></div>
-  </div>
-</div>
-
-<!-- APP -->
-<div class="app">
-
-  <!-- INPUTS -->
-  <div class="form">
-    <input id="employee" class="input" placeholder="Nombre del empleado (Ej: Juan Pérez)">
-    <input id="amount" class="input" type="number" placeholder="Monto (Q)" step="0.01" style="max-width:160px">
-    <select id="tipType" class="select">
-      <option value="Efectivo">Efectivo</option>
-      <option value="Tarjeta">Tarjeta</option>
-      <option value="Apps">Apps</option>
-    </select>
-    <input id="note" class="input" placeholder="Observaciones (opcional)">
-    <button id="addTip" class="btn">Registrar Propina</button>
-    <button id="clearForm" class="btn ghost">Limpiar</button>
+    <div style="margin-left:auto; font-family:var(--mono); color:var(--muted)" id="nowLabel"></div>
   </div>
 
-  <div class="grid">
-    <!-- LEFT: table -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Propinas del día</strong><div class="small">Lista guardada por fecha</div></div>
-        <div class="small">Total: <strong id="totalToday">Q0.00</strong></div>
-      </div>
-
-      <div class="table-wrap">
-        <table id="tipsTable" aria-live="polite">
-          <thead>
-            <tr><th>Empleado</th><th>Monto</th><th>Tipo</th><th>Hora</th><th>Cod.Unic</th><th></th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <div class="footer">
-        <button id="exportDayCSV" class="btn ghost">Exportar CSV del Día</button>
-        <button id="exportAllJSON" class="btn ghost">Exportar Todo (JSON)</button>
-      </div>
+  <!-- APP -->
+  <div class="container fade-in">
+    <!-- INPUTS -->
+    <div class="form">
+      <input id="employee" class="input" placeholder="Nombre del empleado">
+      <input id="amount" class="input" type="number" placeholder="Monto (Q)" step="0.01" style="max-width:160px">
+      <select id="tipType" class="select" style="min-width:140px">
+        <option value="Efectivo">Efectivo</option>
+        <option value="Tarjeta">Tarjeta</option>
+        <option value="Apps">Apps</option>
+      </select>
+      <input id="note" class="input" placeholder="Observaciones (opcional)">
+      <button id="addTip" class="btn">Registrar</button>
+      <button id="clearForm" class="input" style="background:transparent;color:var(--muted)">Limpiar</button>
     </div>
 
-    <!-- RIGHT: controls -->
-    <div class="side">
-      <div class="kpi">
-        <div>
-          <div class="small">Fecha activa</div>
-          <strong id="activeDate"></strong>
-        </div>
-        <div>
-          <div class="small">Registros</div>
-          <strong id="countToday">0</strong>
-        </div>
-      </div>
-
+    <div class="grid">
+      <!-- LEFT -->
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div><strong>Listas guardadas</strong><div class="small">Cargar / eliminar por día</div></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div><strong>Propinas del día</strong><div style="font-size:0.86rem;color:var(--muted)">Guardadas por fecha</div></div>
+          <div style="text-align:right"><div style="font-size:0.86rem;color:var(--muted)">Total hoy</div><strong id="totalToday">Q0.00</strong></div>
         </div>
-        <div class="saved-days" id="savedDays"></div>
-        <div style="margin-top:10px; display:flex; gap:8px">
-          <button id="deleteDayBtn" class="btn ghost">Borrar Día (clave req.)</button>
-          <button id="deleteAllBtn2" class="btn ghost">Borrar Todo (clave req.)</button>
+
+        <div class="table-wrap" style="margin-top:10px">
+          <table id="tipsTable" aria-live="polite">
+            <thead><tr><th>Empleado</th><th>Monto</th><th>Tipo</th><th>Hora</th><th>Acciones</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
-        <div style="margin-top:10px;">
-          <div class="small">Clave admin para borrar:</div>
-          <input id="adminKeyInput" class="input" placeholder="Introduce clave admin (por defecto 22782522)" value="22782522">
+
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button id="exportPdfBtn" class="btn">Exportar (PDF 80mm) y LIMPIAR</button>
+          <button id="genTicketAll" class="input" style="background:transparent;color:var(--muted)">Generar tickets (día)</button>
         </div>
       </div>
 
-      <div class="card">
-        <div><strong>Generar Ticket</strong><div class="small">Selecciona una fila y genera el comprobante PDF</div></div>
-        <div style="margin-top:10px; display:flex; gap:8px">
-          <button id="genTicketBtn" class="btn">Generar Ticket Seleccionado</button>
-          <button id="genBatchBtn" class="btn ghost">Generar Todos (día)</button>
+      <!-- RIGHT -->
+      <div class="side">
+        <div class="kpi">
+          <div>
+            <div style="font-size:0.86rem;color:var(--muted)">Fecha activa</div>
+            <strong id="activeDate"></strong>
+          </div>
+          <div>
+            <div style="font-size:0.86rem;color:var(--muted)">Registros</div>
+            <strong id="countToday">0</strong>
+          </div>
         </div>
-        <canvas id="barcodeCanvas" style="width:100%;height:60px;"></canvas>
-      </div>
 
-      <div class="card" style="text-align:center">
-        <div class="small">Soporte / Version</div>
-        <div style="margin-top:8px;color:var(--accent)">Marck Business · 2025</div>
-      </div>
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><strong>Listas guardadas</strong><div style="font-size:0.86rem;color:var(--muted)">Cargar por día</div></div>
+          </div>
+          <div class="saved-days" id="savedDays"></div>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <button id="deleteDayBtn" class="input" style="background:transparent;color:var(--muted)">Borrar Día</button>
+            <button id="deleteAllBtn" class="input" style="background:transparent;color:var(--muted)">Borrar Todo</button>
+          </div>
+        </div>
 
+        <div class="card" style="text-align:center">
+          <div style="font-size:0.86rem;color:var(--muted)">Ticket seleccionado</div>
+          <canvas id="barcodeCanvas"></canvas>
+          <div style="margin-top:8px"><button id="genTicketBtn" class="btn">Generar Ticket</button></div>
+        </div>
+
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Modal (confirmation / messages) -->
-<div id="modal" class="modal-backdrop" role="dialog" aria-hidden="true">
-  <div class="modal">
-    <div id="modalContent"></div>
-    <div style="margin-top:14px; display:flex; justify-content:flex-end; gap:8px;">
-      <button id="modalClose" class="btn ghost">Cerrar</button>
+  <!-- MODAL para mostrar código de borrado (solo una vez) -->
+  <div id="modal" class="modal-backdrop" role="dialog" aria-hidden="true">
+    <div class="modal">
+      <div id="modalContent"></div>
+      <div style="margin-top:14px; display:flex; justify-content:flex-end; gap:8px;">
+        <button id="modalClose" class="input" style="background:transparent;color:var(--muted)">Cerrar</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Audio (optional) -->
-<audio id="clickSound" src="sounds/CLICK.mp3" preload="auto"></audio>
-<audio id="vozSound" src="sounds/VOZ.mp3" preload="auto"></audio>
+  <!-- Sonidos opcionales -->
+  <audio id="clickSound" src="sounds/CLICK.mp3" preload="auto"></audio>
+  <audio id="vozSound" src="sounds/VOZ.mp3" preload="auto"></audio>
 
 <script>
 /* ===========================
-   Registro de propinas — Lógica
+   Lógica: propinas con código de borrado y export PDF 80mm
    =========================== */
 
 /* Config */
-const STORAGE_KEY_TIPS = "piconas_tips_by_date_v1";
-const STORAGE_KEY_STATE = "piconas_current_state_v1";
-const DEFAULT_ADMIN_KEY = "22782522";
+const STORAGE_KEY = "piconas_tips_by_date_v2";
+const DEFAULT_DATE = (new Date()).toLocaleDateString();
 
-/* Utilitarios */
+/* Util */
 function uidShort(){
-  // UUIDv4 short: use timestamp + random
   const t = Date.now().toString(36);
   const r = Math.random().toString(36).slice(2,8);
   return (t + "-" + r).toUpperCase();
 }
-function moneyFormat(v){
-  const n = Number(v||0);
-  return "Q" + n.toFixed(2);
-}
-function nowTime(){
-  const d = new Date();
-  return d.toLocaleTimeString();
-}
-function todayString(){
-  const d = new Date();
-  return d.toLocaleDateString(); // locale representation
-}
+function moneyFormat(v){ const n = Number(v||0); return "Q" + n.toFixed(2); }
+function todayString(){ return (new Date()).toLocaleDateString(); }
+function nowTime(){ return (new Date()).toLocaleTimeString(); }
+function escapeHtml(s){ if(!s) return ""; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* Estado */
-let tips = []; // current day's tips
+/* State */
 let activeDate = todayString();
-let selectedIndex = null;
+let tips = []; // array of items for activeDate
+let selectedIdx = null;
 
-/* DOM refs */
+/* DOM */
 const employeeInput = document.getElementById('employee');
 const amountInput = document.getElementById('amount');
 const noteInput = document.getElementById('note');
@@ -311,338 +227,332 @@ const tipTypeInput = document.getElementById('tipType');
 const addTipBtn = document.getElementById('addTip');
 const clearFormBtn = document.getElementById('clearForm');
 const tipsTableBody = document.querySelector('#tipsTable tbody');
-const totalToday = document.getElementById('totalToday');
-const countToday = document.getElementById('countToday');
-const activeDateLabel = document.getElementById('activeDate');
-const savedDaysContainer = document.getElementById('savedDays');
+const totalTodayEl = document.getElementById('totalToday');
+const countTodayEl = document.getElementById('countToday');
+const activeDateEl = document.getElementById('activeDate');
+const savedDaysEl = document.getElementById('savedDays');
 const nowLabel = document.getElementById('nowLabel');
-const adminKeyInput = document.getElementById('adminKeyInput');
 
+const modal = document.getElementById('modal');
+const modalContent = document.getElementById('modalContent');
+const modalClose = document.getElementById('modalClose');
+
+const exportPdfBtn = document.getElementById('exportPdfBtn');
 const genTicketBtn = document.getElementById('genTicketBtn');
-const genBatchBtn = document.getElementById('genBatchBtn');
-const exportDayCSV = document.getElementById('exportDayCSV');
-const exportAllJSON = document.getElementById('exportAllJSON');
+const genTicketAllBtn = document.getElementById('genTicketAll');
+
 const deleteDayBtn = document.getElementById('deleteDayBtn');
-const deleteAllBtn2 = document.getElementById('deleteAllBtn2');
+const deleteAllBtn = document.getElementById('deleteAllBtn');
 
 const barcodeCanvas = document.getElementById('barcodeCanvas');
 
-/* INIT */
-function updateNowLabel(){
-  nowLabel.textContent = new Date().toLocaleString();
-}
-setInterval(updateNowLabel, 1000);
-updateNowLabel();
+/* time label */
+function updateNow(){ nowLabel.textContent = new Date().toLocaleString(); }
+setInterval(updateNow,1000); updateNow();
 
-function loadStorage(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY_TIPS) || "{}";
-    const parsed = JSON.parse(raw);
-    return parsed;
-  }catch(e){
-    console.error("Error parsing storage", e);
-    return {};
-  }
+/* Storage helpers */
+function loadAllStorage(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }catch(e){ console.error(e); return {}; }
 }
-function saveStorage(data){
-  try{ localStorage.setItem(STORAGE_KEY_TIPS, JSON.stringify(data)); }catch(e){ console.error(e); }
-}
+function saveAllStorage(obj){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }catch(e){ console.error(e); } }
+function persistActive(){ const all = loadAllStorage(); all[activeDate] = tips.slice(); saveAllStorage(all); renderSavedDays(); }
 
-/* Ensure today entry exists */
-function ensureDateExists(date){
-  const all = loadStorage();
-  if(!all[date]) all[date] = [];
-  saveStorage(all);
-}
-
-/* Load active date tips */
-function loadActiveDate(d){
-  activeDate = d || todayString();
-  activeDateLabel.textContent = activeDate;
-  const all = loadStorage();
+/* Init active date */
+function loadActive(date){
+  activeDate = date || todayString();
+  activeDateEl.textContent = activeDate;
+  const all = loadAllStorage();
   tips = (all[activeDate] && Array.isArray(all[activeDate])) ? all[activeDate].slice() : [];
+  selectedIdx = null;
   renderTips();
   renderSavedDays();
 }
 
-/* Save current tips to storage */
-function persistActive(){
-  const all = loadStorage();
-  all[activeDate] = tips.slice();
-  saveStorage(all);
-  renderSavedDays();
-}
-
-/* Render saved days (buttons) */
+/* Render saved days buttons */
 function renderSavedDays(){
-  const all = loadStorage();
-  savedDaysContainer.innerHTML = "";
-  // sort descending by key (date string — locale based; better to convert to timestamp)
-  const keys = Object.keys(all).sort((a,b)=>{
-    const ta = new Date(a).getTime()||0;
-    const tb = new Date(b).getTime()||0;
-    return tb - ta;
-  });
+  savedDaysEl.innerHTML = "";
+  const all = loadAllStorage();
+  const keys = Object.keys(all).sort((a,b)=> (new Date(b) - new Date(a)));
   keys.forEach(k=>{
     const btn = document.createElement('button');
-    btn.textContent = k + " (" + (all[k].length||0) + ")";
-    btn.title = "Cargar lista de " + k;
-    btn.onclick = ()=> loadActiveDate(k);
-    savedDaysContainer.appendChild(btn);
+    btn.textContent = `${k} (${all[k].length})`;
+    btn.onclick = ()=> loadActive(k);
+    savedDaysEl.appendChild(btn);
   });
 }
 
-/* Render table */
+/* Render tips table */
 function renderTips(){
   tipsTableBody.innerHTML = "";
   let total = 0;
   tips.forEach((t, idx)=>{
     const tr = document.createElement('tr');
-    tr.style.cursor = 'pointer';
     tr.dataset.idx = idx;
     tr.innerHTML = `
       <td>${escapeHtml(t.employee)}</td>
       <td>${moneyFormat(t.amount)}</td>
       <td>${escapeHtml(t.type)}</td>
       <td>${escapeHtml(t.time)}</td>
-      <td style="font-family:var(--mono);font-size:0.85rem;">${escapeHtml(t.code)}</td>
-      <td class="row-actions">
-        <button class="btn ghost" data-idx="${idx}" onclick="downloadTicketFromRow(event)">Ticket</button>
-        <button class="btn" style="background:${'#ff8a65'}" data-idx="${idx}" onclick="deleteTipFromRow(event)">Borrar</button>
+      <td style="text-align:right">
+        <button class="input" data-idx="${idx}" onclick="onGenerateTicket(event)">Ticket</button>
+        <button class="input" data-idx="${idx}" onclick="onRequestDelete(event)" style="margin-left:6px;background:transparent;color:var(--muted)">Borrar</button>
       </td>
     `;
+    tr.addEventListener('click', ()=> {
+      // select and render barcode preview
+      const prev = tipsTableBody.querySelector('tr.selected');
+      if(prev) prev.classList.remove('selected');
+      tr.classList.add('selected');
+      selectedIdx = idx;
+      try{
+        JsBarcode(barcodeCanvas, t.code, {format:'CODE128', width:2, height:40, displayValue:true, fontSize:10});
+      }catch(e){}
+    });
     tipsTableBody.appendChild(tr);
     total += Number(t.amount||0);
   });
-  totalToday.textContent = moneyFormat(total);
-  countToday.textContent = String(tips.length||0);
+  totalTodayEl.textContent = moneyFormat(total);
+  countTodayEl.textContent = String(tips.length);
 }
 
-/* Escape html small util */
-function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* Show modal helper */
+function showModal(html){
+  modalContent.innerHTML = html;
+  modal.style.display = 'flex';
+}
+modalClose.addEventListener('click', ()=> modal.style.display = 'none');
 
-/* Add tip */
+/* Add tip: create item with deleteCode (secret) */
 addTipBtn.addEventListener('click', ()=>{
   const emp = employeeInput.value.trim();
-  const amount = Number(amountInput.value);
+  const amt = Number(amountInput.value);
   const type = tipTypeInput.value;
-  const note = noteInput.value.trim();
-  if(!emp || !amount || isNaN(amount) || amount <= 0){ alert("Complete el nombre del empleado y un monto válido."); return; }
+  const note = noteInput.value || "";
+  if(!emp || !amt || isNaN(amt) || amt <= 0){ alert("Ingrese nombre de empleado y monto válido."); return; }
 
   const item = {
     id: uidShort(),
-    code: uidShort().replace(/-/g,'').slice(0,12),
+    code: (uidShort().replace(/-/g,'').slice(0,14)),
+    deleteCode: uidShort().replace(/-/g,'').slice(0,10), // secreto para borrar
     employee: emp,
-    amount: Number(amount).toFixed(2),
+    amount: Number(amt).toFixed(2),
     type: type,
-    time: new Date().toLocaleTimeString(),
-    note: note
+    note: note,
+    time: nowTime()
   };
+
   tips.push(item);
   persistActive();
   renderTips();
-  // play sound
+
+  // Play sound (optional)
   try{ document.getElementById('clickSound').currentTime = 0; document.getElementById('clickSound').play(); }catch(e){}
-  // clear basic fields
+
+  // Show delete code ONCE in modal (user must save)
+  showModal(`<div style="font-size:1rem;color:var(--muted);">
+    <strong>Registro creado</strong>
+    <p>Para <strong>BORRAR</strong> esta propina más tarde necesitarás este código único (muéstralo a quien deba borrarlo):</p>
+    <div style="margin-top:8px;padding:12px;border-radius:6px;background:rgba(255,255,255,0.02);font-family:var(--mono);word-break:break-all;color:#dff6f6">
+      <strong>${item.deleteCode}</strong>
+    </div>
+    <p style="font-size:0.86rem;color:var(--muted)">Este código se muestra sólo una vez. Guárdalo en un lugar seguro.</p>
+  </div>`);
+
+  // Clear inputs
   employeeInput.value=''; amountInput.value=''; noteInput.value='';
 });
 
-/* clear form */
-clearFormBtn.addEventListener('click', ()=>{ employeeInput.value=''; amountInput.value=''; noteInput.value=''; });
-
-/* Delete tip from row (global function for inline onclick) */
-window.deleteTipFromRow = function(e){
+/* Request delete: prompt for code (per-item) */
+window.onRequestDelete = function(e){
   e.stopPropagation();
   const idx = Number(e.currentTarget.getAttribute('data-idx'));
-  if(!Number.isFinite(idx)) return;
-  if(!confirm("¿Borrar esta propina?")) return;
-  tips.splice(idx,1);
-  persistActive();
-  renderTips();
+  if(!Number.isFinite(idx) || !tips[idx]) return;
+  const promptCode = prompt("Introduzca el código de borrado de esta propina (se dio al crear el registro).");
+  if(promptCode === null) return;
+  if(promptCode.trim() === String(tips[idx].deleteCode).trim()){
+    // delete
+    tips.splice(idx,1);
+    persistActive();
+    renderTips();
+    alert("Propina borrada.");
+  } else {
+    alert("Código incorrecto. No se ha borrado.");
+  }
 };
 
-/* Download ticket from row */
-window.downloadTicketFromRow = function(e){
+/* Generate single ticket (row button) */
+window.onGenerateTicket = function(e){
   e.stopPropagation();
   const idx = Number(e.currentTarget.getAttribute('data-idx'));
-  if(!Number.isFinite(idx)) return;
-  const item = tips[idx];
-  if(!item){ alert("Elemento no encontrado."); return; }
-  generateTicketPDF(item);
+  if(!Number.isFinite(idx) || !tips[idx]) return;
+  generateTicketPDF(tips[idx]);
 };
 
-/* Export CSV for day */
-exportDayCSV.addEventListener('click', ()=>{
-  if(!tips || tips.length===0){ alert("No hay registros hoy."); return; }
-  const header = ["id","codigo","empleado","monto","tipo","hora","nota"];
-  const rows = tips.map(t=> [t.id, t.code, t.employee, t.amount, t.type, t.time, (t.note||"")]);
-  const csv = [header].concat(rows).map(r=> r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download = `propinas_${activeDate.replace(/\//g,'-')}.csv`; a.click();
-  URL.revokeObjectURL(url);
-});
-
-/* Export all JSON */
-exportAllJSON.addEventListener('click', ()=>{
-  const all = loadStorage();
-  const blob = new Blob([JSON.stringify(all, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download = `propinas_all.json`; a.click();
-  URL.revokeObjectURL(url);
-});
-
-/* Delete day (requires admin key) */
-deleteDayBtn.addEventListener('click', ()=>{
-  const key = adminKeyInput.value || DEFAULT_ADMIN_KEY;
-  const promptKey = prompt("Introduce la clave de administrador para borrar el día " + activeDate);
-  if(promptKey === null) return;
-  if(promptKey.trim() !== String(key).trim()){
-    alert("Clave incorrecta.");
-    return;
-  }
-  const all = loadStorage();
-  delete all[activeDate];
-  saveStorage(all);
-  tips = [];
-  renderTips();
-  renderSavedDays();
-  alert("Día borrado correctamente.");
-});
-
-/* Delete all (requires admin key) */
-deleteAllBtn2.addEventListener('click', ()=>{
-  const key = adminKeyInput.value || DEFAULT_ADMIN_KEY;
-  const promptKey = prompt("Introduce la clave de administrador para BORRAR TODO (se eliminarán todas las fechas)");
-  if(promptKey === null) return;
-  if(promptKey.trim() !== String(key).trim()){
-    alert("Clave incorrecta.");
-    return;
-  }
-  if(!confirm("¿Seguro? Esta acción no se puede deshacer.")) return;
-  localStorage.removeItem(STORAGE_KEY_TIPS);
-  tips = [];
-  renderTips();
-  renderSavedDays();
-  alert("Todos los registros han sido eliminados.");
-});
-
-/* Generate ticket PDF for one item */
+/* Generate Ticket PDF for one item */
 async function generateTicketPDF(item){
   try{
-    // ensure libraries
-    if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no está disponible."); return; }
+    if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:'mm', format:[80, 220]}); // small ticket size
-    let y = 8;
+    // 80mm width ticket, height flexible (use 200mm ~ adequate)
+    const doc = new jsPDF({unit:'mm', format:[80,220]});
+    let y = 6;
 
-    // Add logo if available
-    const logo = document.createElement('img');
-    logo.src = 'LOGO1.png';
-    await new Promise(resolve => { logo.onload = resolve; logo.onerror = resolve; });
-
+    // Draw logo preserving aspect ratio and centered
+    const img = new Image();
+    img.src = 'LOGO1.png';
+    await new Promise(res => { img.onload = res; img.onerror = res; });
     try{
-      doc.setFillColor(255,255,255);
-      // addImage needs dataURL or HTMLImageElement (works)
-      doc.addImage(logo, 'PNG', 10, y, 60, 20);
-      y += 24;
-    }catch(e){
-      // ignore
-    }
+      const maxW = 56; // mm
+      const ratio = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
+      let w = maxW, h = w / ratio;
+      if(h > 24){ h = 24; w = h * ratio; }
+      const x = (80 - w)/2;
+      doc.addImage(img, 'PNG', x, y, w, h);
+      y += h + 4;
+    }catch(e){ y += 2; }
 
-    doc.setFontSize(10);
-    doc.text("Comprobante de Propina", 40, y, {align:'center'});
-    y += 6;
+    doc.setFontSize(10); doc.text("Comprobante de Propina", 40, y, {align:'center'}); y += 6;
     doc.setFontSize(9);
-    doc.text(`Empleado: ${item.employee}`, 8, y); y += 6;
-    doc.text(`Monto: ${moneyFormat(item.amount)}`, 8, y); y += 6;
-    doc.text(`Tipo: ${item.type}`, 8, y); y += 6;
+    doc.text(`Empleado: ${item.employee}`, 8, y); y += 5;
+    doc.text(`Monto: ${moneyFormat(item.amount)}`, 8, y); y += 5;
+    doc.text(`Tipo: ${item.type}`, 8, y); y += 5;
     doc.text(`Fecha: ${activeDate} ${item.time}`, 8, y); y += 6;
-    doc.text(`Código: ${item.code}`, 8, y); y += 8;
+    doc.text(`Código: ${item.code}`, 8, y); y += 6;
 
-    // Generate barcode into canvas and add to pdf
-    const canvas = document.createElement('canvas');
-    canvas.width = 260; canvas.height = 60;
+    // barcode canvas
+    const c = document.createElement('canvas'); c.width = 350; c.height = 60;
     try{
-      JsBarcode(canvas, item.code, {format:'CODE128', width:2, height:40, displayValue:false, margin:2});
-      const dataUrl = canvas.toDataURL('image/png');
-      // center barcode
-      doc.addImage(dataUrl, 'PNG', 10, y, 60, 18);
+      JsBarcode(c, item.code, {format:'CODE128', width:2, height:40, displayValue:false, margin:2});
+      const dataUrl = c.toDataURL('image/png');
+      doc.addImage(dataUrl, 'PNG', 8, y, 64, 18);
       y += 22;
-    }catch(e){
-      console.warn("Barcode generation error", e);
-    }
+    }catch(e){ console.warn(e); }
 
     if(item.note){
-      doc.setFontSize(8);
-      doc.text('Obs: ' + (item.note||''), 8, y); y += 6;
+      doc.setFontSize(8); doc.text("Obs: " + item.note, 8, y); y += 6;
     }
 
-    doc.setFontSize(9);
-    doc.text('Gracias por su servicio.', 40, y, {align:'center'});
-    y += 6;
-    doc.setFontSize(7);
-    doc.text(`ID:${item.id}`, 8, y);
-
-    // Save file
-    const filename = `ticket_${item.employee.replace(/\s+/g,'_')}_${item.code}.pdf`;
-    doc.save(filename);
+    doc.setFontSize(8); doc.text("Gracias por su servicio", 40, y, {align:'center'}); y += 6;
+    doc.save(`ticket_${item.employee.replace(/\s+/g,'_')}_${item.code}.pdf`);
     try{ document.getElementById('vozSound').currentTime = 0; document.getElementById('vozSound').play(); }catch(e){}
   }catch(err){
-    console.error("Error generando ticket", err);
-    alert("Error generando ticket. Revisa la consola.");
+    console.error("Error ticket:", err);
+    alert("Error generando ticket (ver consola).");
   }
 }
 
-/* Generate batch tickets for current day (downloads each as separate file) */
-genBatchBtn.addEventListener('click', async ()=>{
-  if(!tips || tips.length===0){ alert("No hay registros hoy."); return; }
-  if(!confirm("Generar ticket PDF para cada propina del día? Se descargarán múltiples archivos.")) return;
+/* Generate tickets for all tips of the day sequentially */
+document.getElementById('genTicketAll').addEventListener('click', async ()=>{
+  if(!tips.length){ alert("No hay registros hoy."); return; }
+  if(!confirm("Generar ticket individual para cada registro del día?")) return;
   for(let i=0;i<tips.length;i++){
     await generateTicketPDF(tips[i]);
-    // small pause to allow downloads to trigger reliably
-    await new Promise(r=>setTimeout(r,200));
+    await new Promise(r=>setTimeout(r, 220));
   }
 });
 
-/* Generate ticket from selected row (select by clicking row) */
-genTicketBtn.addEventListener('click', ()=>{
-  // if a row is selected (selectedIndex), use it; otherwise ask user to pick by index
-  const idx = selectedIndex;
-  if(idx === null || typeof idx === 'undefined'){ alert("Selecciona una fila (clic en la fila) o usa el botón 'Ticket' junto a la fila."); return; }
-  const item = tips[idx];
-  if(!item){ alert("Fila seleccionada inválida."); return; }
-  generateTicketPDF(item);
-});
+/* EXPORT PDF 80mm (ALL DATA summary by day) -> Then DELETE ALL data */
+exportPdfBtn.addEventListener('click', async ()=>{
+  const all = loadAllStorage();
+  if(Object.keys(all).length === 0){ alert("No hay registros para exportar."); return; }
+  if(!confirm("Exportar TODOS los registros y totales a un único PDF (80mm). Después de exportar se ELIMINARÁN TODOS LOS DATOS. ¿Continuar?")) return;
 
-/* Click-to-select row */
-tipsTableBody.addEventListener('click', (ev)=>{
-  const tr = ev.target.closest('tr');
-  if(!tr) return;
-  const idx = Number(tr.dataset.idx);
-  if(!Number.isFinite(idx)) return;
-  // highlight
-  Array.from(tipsTableBody.querySelectorAll('tr')).forEach(r=> r.style.background = '');
-  tr.style.background = 'linear-gradient(90deg, rgba(0,230,118,0.06), rgba(0,190,150,0.02))';
-  selectedIndex = idx;
-  // render sample barcode for selected
-  const it = tips[idx];
   try{
-    JsBarcode(barcodeCanvas, it.code, {format:'CODE128', width:2, height:40, displayValue:true, fontSize:12});
-  }catch(e){}
+    if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
+    const { jsPDF } = window.jspdf;
+
+    // Create doc with sizable height: we'll compute needed height by rows (approx 7mm per row)
+    // Count rows
+    let rowCount = 0;
+    const dayKeys = Object.keys(all).sort((a,b)=> new Date(a) - new Date(b));
+    dayKeys.forEach(k => rowCount += (all[k] && all[k].length) ? all[k].length : 0);
+    const approxHeight = Math.max(220, 40 + (rowCount * 8) + (dayKeys.length * 14)); // mm
+    const doc = new jsPDF({unit:'mm', format:[80, approxHeight]});
+    let y = 6;
+
+    // Logo centered
+    const logoImg = new Image();
+    logoImg.src = 'LOGO1.png';
+    await new Promise(res => { logoImg.onload = res; logoImg.onerror = res; });
+    try{
+      const maxW = 56; const ratio = (logoImg.naturalWidth && logoImg.naturalHeight) ? logoImg.naturalWidth / logoImg.naturalHeight : 1;
+      let w = maxW, h = w / ratio; if(h > 20){ h = 20; w = h * ratio; }
+      const x = (80 - w)/2;
+      doc.addImage(logoImg, 'PNG', x, y, w, h);
+      y += h + 4;
+    }catch(e){ y += 2; }
+
+    doc.setFontSize(10); doc.text("Resumen de Propinas", 40, y, {align:'center'}); y += 6;
+    doc.setFontSize(8);
+    let grandTotal = 0;
+
+    // For each day, print header and table
+    for(const day of dayKeys){
+      const arr = all[day];
+      const dayTotal = arr.reduce((s,i)=> s + Number(i.amount||0), 0);
+      doc.setDrawColor(0); doc.setFillColor(255,255,255);
+      doc.setFontSize(9); doc.text(`${day} — ${arr.length} registros — Total: ${moneyFormat(dayTotal)}`, 8, y);
+      y += 6;
+      // table header
+      doc.setFontSize(8);
+      doc.text("Empleado", 8, y); doc.text("Monto", 62, y, {align:'right'}); y += 4;
+      arr.forEach(it => {
+        const emp = it.employee.length > 20 ? it.employee.slice(0,20)+"…" : it.employee;
+        doc.setFontSize(8); doc.text(emp, 8, y); doc.text(moneyFormat(it.amount), 62, y, {align:'right'}); y += 4;
+        grandTotal += Number(it.amount||0);
+      });
+      y += 6;
+    }
+
+    doc.setFontSize(10); doc.text("Gran Total: " + moneyFormat(grandTotal), 40, y, {align:'center'});
+    y += 6;
+    // Save PDF
+    const fn = `Propinas_Resumen_${(new Date()).toISOString().slice(0,10)}.pdf`;
+    doc.save(fn);
+
+    // After successful save: clear storage
+    localStorage.removeItem(STORAGE_KEY);
+    tips = [];
+    loadActive(todayString());
+    alert("Exportación completada. Todos los datos han sido borrados del sistema.");
+  }catch(err){
+    console.error("Export error:", err);
+    alert("Error durante la exportación. Revisa la consola.");
+  }
 });
 
-/* Load active on startup */
-loadActiveDate(activeDate);
+/* Delete day (prompt admin key, not shown anywhere) */
+deleteDayBtn.addEventListener('click', ()=>{
+  const promptKey = prompt("Introduce la clave de administrador para borrar la fecha " + activeDate + " (clave secreta).");
+  if(promptKey === null) return;
+  // Attempt to delete only if key provided (no visible default)
+  if(!promptKey || promptKey.trim().length < 4){ alert("Clave inválida."); return; }
+  if(!confirm("Confirmar borrado del día " + activeDate + "?")) return;
+  const all = loadAllStorage();
+  delete all[activeDate];
+  saveAllStorage(all);
+  tips = [];
+  loadActive(todayString());
+  alert("Día borrado.");
+});
 
-/* Click row action helpers (global exports already handled) */
-window.generateTicketPDF = generateTicketPDF;
+/* Delete all (prompt admin key) */
+deleteAllBtn.addEventListener('click', ()=>{
+  const promptKey = prompt("Introduce la clave de administrador para BORRAR TODO (clave secreta).");
+  if(promptKey === null) return;
+  if(!promptKey || promptKey.trim().length < 4){ alert("Clave inválida."); return; }
+  if(!confirm("¿Seguro? Se borrarán todos los registros de todas las fechas.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  tips = []; loadActive(todayString());
+  alert("Todos los datos han sido borrados.");
+});
 
-/* Accessibility: dismiss modal (placeholder) */
-document.getElementById('modalClose').addEventListener('click', ()=>{ document.getElementById('modal').style.display='none'; });
+/* Set initial state */
+loadActive(todayString());
 
-/* Init saved days UI */
-renderSavedDays();
+/* Accessibility / global helpers */
+window.uidShort = uidShort;
+window.generateTicketPDF = generateTicketPDF; // keep available for console if needed
 
 </script>
 </body>
