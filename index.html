@@ -17,7 +17,7 @@
 :root{
   --bg:#0b1220;
   --panel: rgba(255,255,255,0.02);
-  --accent:#117a8b;
+  --accent:#0b7285;
   --accent-2:#0fa3a3;
   --muted:#9fb3b3;
   --glass: rgba(255,255,255,0.02);
@@ -33,7 +33,6 @@ body{
   background: linear-gradient(180deg, #071018 0%, #071827 100%);
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  -webkit-touch-callout:none;
 }
 
 /* header */
@@ -180,7 +179,7 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
     </div>
   </div>
 
-  <!-- MODAL para mostrar código de borrado (solo una vez) -->
+  <!-- MODAL (simple) -->
   <div id="modal" class="modal-backdrop" role="dialog" aria-hidden="true">
     <div class="modal">
       <div id="modalContent"></div>
@@ -196,12 +195,16 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
 
 <script>
 /* ===========================
-   Lógica: propinas con código de borrado y export PDF 80mm
+   Lógica final solicitada
+   - BORRAR individual requiere código secreto: 22782522 (no mostrado)
+   - CIERRE/EXPORTAR requiere código secreto: 12345 (no mostrado)
+   - LOGO1.png in page, LOGO2.jpg in ticket
    =========================== */
 
 /* Config */
-const STORAGE_KEY = "piconas_tips_by_date_v2";
-const DEFAULT_DATE = (new Date()).toLocaleDateString();
+const STORAGE_KEY = "piconas_tips_by_date_v3";
+const DELETE_SECRET = "22782522"; // secreto para borrar una propina
+const CLOSURE_SECRET = "12345";   // secreto para cierre/impresion y borrado de todo
 
 /* Util */
 function uidShort(){
@@ -209,14 +212,14 @@ function uidShort(){
   const r = Math.random().toString(36).slice(2,8);
   return (t + "-" + r).toUpperCase();
 }
-function moneyFormat(v){ const n = Number(v||0); return "Q" + n.toFixed(2); }
+function moneyFormat(v){ const n = Number(v||0); return "Q" + Number(n).toFixed(2); }
 function todayString(){ return (new Date()).toLocaleDateString(); }
 function nowTime(){ return (new Date()).toLocaleTimeString(); }
 function escapeHtml(s){ if(!s) return ""; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* State */
 let activeDate = todayString();
-let tips = []; // array of items for activeDate
+let tips = []; // items for active date
 let selectedIdx = null;
 
 /* DOM */
@@ -233,27 +236,23 @@ const activeDateEl = document.getElementById('activeDate');
 const savedDaysEl = document.getElementById('savedDays');
 const nowLabel = document.getElementById('nowLabel');
 
-const modal = document.getElementById('modal');
-const modalContent = document.getElementById('modalContent');
-const modalClose = document.getElementById('modalClose');
-
 const exportPdfBtn = document.getElementById('exportPdfBtn');
 const genTicketBtn = document.getElementById('genTicketBtn');
 const genTicketAllBtn = document.getElementById('genTicketAll');
-
 const deleteDayBtn = document.getElementById('deleteDayBtn');
 const deleteAllBtn = document.getElementById('deleteAllBtn');
 
+const modal = document.getElementById('modal');
+const modalContent = document.getElementById('modalContent');
+const modalClose = document.getElementById('modalClose');
 const barcodeCanvas = document.getElementById('barcodeCanvas');
 
-/* time label */
+/* clock */
 function updateNow(){ nowLabel.textContent = new Date().toLocaleString(); }
 setInterval(updateNow,1000); updateNow();
 
 /* Storage helpers */
-function loadAllStorage(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }catch(e){ console.error(e); return {}; }
-}
+function loadAllStorage(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }catch(e){ console.error(e); return {}; } }
 function saveAllStorage(obj){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }catch(e){ console.error(e); } }
 function persistActive(){ const all = loadAllStorage(); all[activeDate] = tips.slice(); saveAllStorage(all); renderSavedDays(); }
 
@@ -268,7 +267,7 @@ function loadActive(date){
   renderSavedDays();
 }
 
-/* Render saved days buttons */
+/* Render saved days */
 function renderSavedDays(){
   savedDaysEl.innerHTML = "";
   const all = loadAllStorage();
@@ -315,14 +314,14 @@ function renderTips(){
   countTodayEl.textContent = String(tips.length);
 }
 
-/* Show modal helper */
+/* Modal helper */
 function showModal(html){
   modalContent.innerHTML = html;
   modal.style.display = 'flex';
 }
 modalClose.addEventListener('click', ()=> modal.style.display = 'none');
 
-/* Add tip: create item with deleteCode (secret) */
+/* Add tip - create item WITHOUT exposing any delete codes */
 addTipBtn.addEventListener('click', ()=>{
   const emp = employeeInput.value.trim();
   const amt = Number(amountInput.value);
@@ -333,7 +332,7 @@ addTipBtn.addEventListener('click', ()=>{
   const item = {
     id: uidShort(),
     code: (uidShort().replace(/-/g,'').slice(0,14)),
-    deleteCode: uidShort().replace(/-/g,'').slice(0,10), // secreto para borrar
+    // deleteCode intentionally not exposed in UI; using global secret DELETE_SECRET
     employee: emp,
     amount: Number(amt).toFixed(2),
     type: type,
@@ -345,31 +344,20 @@ addTipBtn.addEventListener('click', ()=>{
   persistActive();
   renderTips();
 
-  // Play sound (optional)
   try{ document.getElementById('clickSound').currentTime = 0; document.getElementById('clickSound').play(); }catch(e){}
-
-  // Show delete code ONCE in modal (user must save)
-  showModal(`<div style="font-size:1rem;color:var(--muted);">
-    <strong>Registro creado</strong>
-    <p>Para <strong>BORRAR</strong> esta propina más tarde necesitarás este código único (muéstralo a quien deba borrarlo):</p>
-    <div style="margin-top:8px;padding:12px;border-radius:6px;background:rgba(255,255,255,0.02);font-family:var(--mono);word-break:break-all;color:#dff6f6">
-      <strong>${item.deleteCode}</strong>
-    </div>
-    <p style="font-size:0.86rem;color:var(--muted)">Este código se muestra sólo una vez. Guárdalo en un lugar seguro.</p>
-  </div>`);
 
   // Clear inputs
   employeeInput.value=''; amountInput.value=''; noteInput.value='';
 });
 
-/* Request delete: prompt for code (per-item) */
+/* Request delete per-item: asks for global secret DELETE_SECRET (22782522) */
 window.onRequestDelete = function(e){
   e.stopPropagation();
   const idx = Number(e.currentTarget.getAttribute('data-idx'));
   if(!Number.isFinite(idx) || !tips[idx]) return;
-  const promptCode = prompt("Introduzca el código de borrado de esta propina (se dio al crear el registro).");
+  const promptCode = prompt("Introduzca el código secreto para borrar esta propina:");
   if(promptCode === null) return;
-  if(promptCode.trim() === String(tips[idx].deleteCode).trim()){
+  if(promptCode.trim() === DELETE_SECRET){
     // delete
     tips.splice(idx,1);
     persistActive();
@@ -388,26 +376,25 @@ window.onGenerateTicket = function(e){
   generateTicketPDF(tips[idx]);
 };
 
-/* Generate Ticket PDF for one item */
+/* Generate Ticket PDF for one item using LOGO2.jpg (respect aspect ratio) */
 async function generateTicketPDF(item){
   try{
     if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
     const { jsPDF } = window.jspdf;
-    // 80mm width ticket, height flexible (use 200mm ~ adequate)
     const doc = new jsPDF({unit:'mm', format:[80,220]});
     let y = 6;
 
-    // Draw logo preserving aspect ratio and centered
+    // Draw LOGO2.jpg centered preserving aspect ratio
     const img = new Image();
-    img.src = 'LOGO1.png';
+    img.src = 'LOGO2.jpg';
     await new Promise(res => { img.onload = res; img.onerror = res; });
     try{
       const maxW = 56; // mm
       const ratio = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
       let w = maxW, h = w / ratio;
-      if(h > 24){ h = 24; w = h * ratio; }
+      if(h > 28){ h = 28; w = h * ratio; }
       const x = (80 - w)/2;
-      doc.addImage(img, 'PNG', x, y, w, h);
+      doc.addImage(img, 'JPEG', x, y, w, h);
       y += h + 4;
     }catch(e){ y += 2; }
 
@@ -451,82 +438,85 @@ document.getElementById('genTicketAll').addEventListener('click', async ()=>{
   }
 });
 
-/* EXPORT PDF 80mm (ALL DATA summary by day) -> Then DELETE ALL data */
+/* EXPORT PDF 80mm for ALL DATA (requires closure secret). After export delete all data */
 exportPdfBtn.addEventListener('click', async ()=>{
   const all = loadAllStorage();
   if(Object.keys(all).length === 0){ alert("No hay registros para exportar."); return; }
+  const provided = prompt("Ingrese el código de cierre para exportar e imprimir (código secreto):");
+  if(provided === null) return;
+  if(provided.trim() !== CLOSURE_SECRET){
+    alert("Código de cierre incorrecto.");
+    return;
+  }
+
   if(!confirm("Exportar TODOS los registros y totales a un único PDF (80mm). Después de exportar se ELIMINARÁN TODOS LOS DATOS. ¿Continuar?")) return;
 
   try{
     if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
     const { jsPDF } = window.jspdf;
 
-    // Create doc with sizable height: we'll compute needed height by rows (approx 7mm per row)
-    // Count rows
+    // Count rows and estimate height
     let rowCount = 0;
     const dayKeys = Object.keys(all).sort((a,b)=> new Date(a) - new Date(b));
     dayKeys.forEach(k => rowCount += (all[k] && all[k].length) ? all[k].length : 0);
-    const approxHeight = Math.max(220, 40 + (rowCount * 8) + (dayKeys.length * 14)); // mm
+    const approxHeight = Math.max(220, 40 + (rowCount * 8) + (dayKeys.length * 14));
     const doc = new jsPDF({unit:'mm', format:[80, approxHeight]});
     let y = 6;
 
-    // Logo centered
-    const logoImg = new Image();
-    logoImg.src = 'LOGO1.png';
-    await new Promise(res => { logoImg.onload = res; logoImg.onerror = res; });
+    // Add LOGO2 at top of summary too (optional) - respect aspect ratio
+    const logoTop = new Image();
+    logoTop.src = 'LOGO2.jpg';
+    await new Promise(res => { logoTop.onload = res; logoTop.onerror = res; });
     try{
-      const maxW = 56; const ratio = (logoImg.naturalWidth && logoImg.naturalHeight) ? logoImg.naturalWidth / logoImg.naturalHeight : 1;
+      const maxW = 56; const ratio = (logoTop.naturalWidth && logoTop.naturalHeight) ? logoTop.naturalWidth / logoTop.naturalHeight : 1;
       let w = maxW, h = w / ratio; if(h > 20){ h = 20; w = h * ratio; }
       const x = (80 - w)/2;
-      doc.addImage(logoImg, 'PNG', x, y, w, h);
+      doc.addImage(logoTop, 'JPEG', x, y, w, h);
       y += h + 4;
     }catch(e){ y += 2; }
 
-    doc.setFontSize(10); doc.text("Resumen de Propinas", 40, y, {align:'center'}); y += 6;
+    doc.setFontSize(10); doc.text("Cierre de Propinas · Resumen", 40, y, {align:'center'}); y += 6;
     doc.setFontSize(8);
     let grandTotal = 0;
 
-    // For each day, print header and table
     for(const day of dayKeys){
       const arr = all[day];
       const dayTotal = arr.reduce((s,i)=> s + Number(i.amount||0), 0);
-      doc.setDrawColor(0); doc.setFillColor(255,255,255);
       doc.setFontSize(9); doc.text(`${day} — ${arr.length} registros — Total: ${moneyFormat(dayTotal)}`, 8, y);
       y += 6;
-      // table header
       doc.setFontSize(8);
       doc.text("Empleado", 8, y); doc.text("Monto", 62, y, {align:'right'}); y += 4;
       arr.forEach(it => {
         const emp = it.employee.length > 20 ? it.employee.slice(0,20)+"…" : it.employee;
-        doc.setFontSize(8); doc.text(emp, 8, y); doc.text(moneyFormat(it.amount), 62, y, {align:'right'}); y += 4;
+        doc.text(emp, 8, y); doc.text(moneyFormat(it.amount), 62, y, {align:'right'}); y += 4;
         grandTotal += Number(it.amount||0);
       });
       y += 6;
+      // Guard against page overflow - but doc has big height; keep simple
     }
 
-    doc.setFontSize(10); doc.text("Gran Total: " + moneyFormat(grandTotal), 40, y, {align:'center'});
-    y += 6;
-    // Save PDF
-    const fn = `Propinas_Resumen_${(new Date()).toISOString().slice(0,10)}.pdf`;
+    doc.setFontSize(10); doc.text("Gran Total: " + moneyFormat(grandTotal), 40, y, {align:'center'}); y += 6;
+    doc.setFontSize(8); doc.text("Cierre realizado: " + new Date().toLocaleString(), 8, y); y += 6;
+
+    const fn = `Propinas_Cierre_${(new Date()).toISOString().slice(0,10)}.pdf`;
     doc.save(fn);
 
-    // After successful save: clear storage
+    // After save: clear storage
     localStorage.removeItem(STORAGE_KEY);
     tips = [];
     loadActive(todayString());
-    alert("Exportación completada. Todos los datos han sido borrados del sistema.");
+    alert("Exportación completada y datos eliminados del sistema.");
   }catch(err){
     console.error("Export error:", err);
     alert("Error durante la exportación. Revisa la consola.");
   }
 });
 
-/* Delete day (prompt admin key, not shown anywhere) */
+/* Delete day (requires secret) */
 deleteDayBtn.addEventListener('click', ()=>{
-  const promptKey = prompt("Introduce la clave de administrador para borrar la fecha " + activeDate + " (clave secreta).");
+  const promptKey = prompt("Introduce el código secreto para borrar la fecha " + activeDate + ":");
   if(promptKey === null) return;
-  // Attempt to delete only if key provided (no visible default)
-  if(!promptKey || promptKey.trim().length < 4){ alert("Clave inválida."); return; }
+  if(promptKey.trim() !== DELETE_SECRET){ alert("Código incorrecto."); return; }
   if(!confirm("Confirmar borrado del día " + activeDate + "?")) return;
   const all = loadAllStorage();
   delete all[activeDate];
@@ -536,23 +526,26 @@ deleteDayBtn.addEventListener('click', ()=>{
   alert("Día borrado.");
 });
 
-/* Delete all (prompt admin key) */
+/* Delete all (requires secret) */
 deleteAllBtn.addEventListener('click', ()=>{
-  const promptKey = prompt("Introduce la clave de administrador para BORRAR TODO (clave secreta).");
+  const promptKey = prompt("Introduce el código secreto para BORRAR TODO:");
   if(promptKey === null) return;
-  if(!promptKey || promptKey.trim().length < 4){ alert("Clave inválida."); return; }
+  if(promptKey.trim() !== DELETE_SECRET){ alert("Código incorrecto."); return; }
   if(!confirm("¿Seguro? Se borrarán todos los registros de todas las fechas.")) return;
   localStorage.removeItem(STORAGE_KEY);
   tips = []; loadActive(todayString());
   alert("Todos los datos han sido borrados.");
 });
 
-/* Set initial state */
-loadActive(todayString());
+/* Load initial state */
+function init(){
+  loadActive(todayString());
+}
+init();
 
-/* Accessibility / global helpers */
+/* Expose small helpers for inline handlers */
+window.generateTicketPDF = generateTicketPDF;
 window.uidShort = uidShort;
-window.generateTicketPDF = generateTicketPDF; // keep available for console if needed
 
 </script>
 </body>
