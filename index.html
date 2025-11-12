@@ -1,3 +1,154 @@
+<!-- LOGIN COMPONENT: copia esto dentro de tu HTML donde quieras el login -->
+<!-- Credenciales por defecto: usuario "admin" / clave "22782522" -->
+<style>
+  /* Estilos del login (autocontenidos) */
+  #loginContainer {
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(120deg, rgba(7,18,24,0.92), rgba(15,32,43,0.92));
+    z-index:99999;
+  }
+  #loginCard{
+    width:360px; max-width:94%; padding:28px; border-radius:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    color:#eaf6f6; font-family:Inter, Poppins, Arial, sans-serif;
+  }
+  #loginCard h2{ margin:0 0 10px 0; color:#9fe6df; font-size:1.1rem; }
+  .login-row{ display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+  .login-row input{
+    padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.04);
+    background: rgba(0,0,0,0.25); color: #eaf6f6; font-size:0.95rem;
+    outline:none;
+  }
+  .login-actions{ display:flex; gap:8px; margin-top:14px; align-items:center; }
+  .btn-primary{
+    flex:1; padding:10px 12px; border-radius:8px; border:none; cursor:pointer;
+    background: linear-gradient(180deg,#0b7285,#0fa3a3); color:#021212; font-weight:700;
+  }
+  .btn-secondary{
+    padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);
+    background:transparent; color:var(--muted, #9fb3b3); cursor:pointer;
+  }
+  #loginError{ color:#ff7b7b; font-size:0.88rem; display:none; margin-top:8px; }
+  @media(max-width:420px){ #loginCard{ padding:16px } }
+</style>
+
+<div id="loginContainer" aria-hidden="false">
+  <div id="loginCard" role="dialog" aria-labelledby="loginTitle" aria-modal="true">
+    <h2 id="loginTitle">Acceso al Sistema</h2>
+    <div class="login-row">
+      <label class="sr-only" for="loginUser">Usuario</label>
+      <input id="loginUser" type="text" autocomplete="username" placeholder="Usuario (ej. admin)">
+      <label class="sr-only" for="loginPass">Contraseña</label>
+      <input id="loginPass" type="password" autocomplete="current-password" placeholder="Contraseña">
+    </div>
+
+    <div class="login-actions">
+      <button id="loginBtn" class="btn-primary" type="button">Ingresar</button>
+      <button id="loginCancel" class="btn-secondary" type="button" title="Cerrar login">Cerrar</button>
+    </div>
+
+    <div id="loginError" role="alert">Usuario o contraseña incorrectos.</div>
+  </div>
+</div>
+
+<script>
+/*
+  Login simple en cliente (sin base de datos).
+  - Usuario por defecto: admin
+  - Clave por defecto: 22782522
+  - Al ingresar con éxito dispara evento "login-success" en window con detalle {user}
+  - Escucha window.addEventListener('login-success', e => { ... }) para iniciar tu app
+  - Para ocultar el login manualmente puedes llamar hideLogin()
+*/
+
+(function(){
+  const DEFAULT_USER = 'admin';
+  const DEFAULT_PASS = '22782522';
+
+  const loginContainer = document.getElementById('loginContainer');
+  const userInput = document.getElementById('loginUser');
+  const passInput = document.getElementById('loginPass');
+  const loginBtn = document.getElementById('loginBtn');
+  const cancelBtn = document.getElementById('loginCancel');
+  const errEl = document.getElementById('loginError');
+
+  // Autofocus usuario
+  setTimeout(()=> userInput.focus(), 120);
+
+  // Mostrar/ocultar helpers
+  function showError(msg){
+    errEl.textContent = msg || 'Usuario o contraseña incorrectos.';
+    errEl.style.display = 'block';
+  }
+  function hideError(){ errEl.style.display = 'none'; }
+
+  function hideLogin(){
+    loginContainer.style.display = 'none';
+    loginContainer.setAttribute('aria-hidden','true');
+  }
+  function showLogin(){
+    loginContainer.style.display = 'flex';
+    loginContainer.setAttribute('aria-hidden','false');
+    userInput.focus();
+  }
+
+  // Validación - devuelve true si coincide
+  function validateCredentials(u,p){
+    // Normalizamos a string y comparamos exactamente con los valores pedidos
+    return String(u).trim() === DEFAULT_USER && String(p).trim() === DEFAULT_PASS;
+  }
+
+  // Éxito de login: guarda flag y emite evento para app
+  function onLoginSuccess(user){
+    // marca sesión (puedes cambiar a sessionStorage si prefieres)
+    localStorage.setItem('piconas_logged', JSON.stringify({ user, ts: Date.now() }));
+    // emitimos evento público con detalle
+    const ev = new CustomEvent('login-success', { detail: { user }});
+    window.dispatchEvent(ev);
+    hideLogin();
+  }
+
+  // Manejo botón
+  loginBtn.addEventListener('click', ()=>{
+    hideError();
+    const u = userInput.value || '';
+    const p = passInput.value || '';
+    if(!u || !p){ showError('Complete usuario y contraseña.'); return; }
+    if(validateCredentials(u,p)){
+      onLoginSuccess(u.trim());
+    } else {
+      showError();
+    }
+  });
+
+  // Enter para enviar
+  [userInput, passInput].forEach(inp=>{
+    inp.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); loginBtn.click(); }
+    });
+  });
+
+  // Cancelar / cerrar login (por si quieres mostrar app sin login durante pruebas)
+  cancelBtn.addEventListener('click', ()=>{
+    hideLogin();
+    // emitimos evento "login-cancel" por si la app lo necesita
+    window.dispatchEvent(new CustomEvent('login-cancel'));
+  });
+
+  // Provee funciones globales útiles (no obligatorias)
+  window.LoginComponent = {
+    show: showLogin,
+    hide: hideLogin,
+    isLogged: ()=> {
+      try{ return !!JSON.parse(localStorage.getItem('piconas_logged')); }catch(e){return false;}
+    },
+    logout: ()=> { localStorage.removeItem('piconas_logged'); showLogin(); }
+  };
+
+})();
+</script>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
