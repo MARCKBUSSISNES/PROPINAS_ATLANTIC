@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Registro de Propinas · Las Piconas</title>
 
-<!-- Librerías CDN -->
+<!-- Librerías CDN (dejar si tienes problemas, puedo crear versiones locales) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
 <style>
 :root{
-  --bg:#0b1220;
+  --bg:#071018;
   --panel: rgba(255,255,255,0.02);
   --accent:#0b7285;
   --accent-2:#0fa3a3;
@@ -21,52 +21,66 @@
   --card-radius:12px;
   --mono: "Courier New", monospace;
   --footer-glow: rgba(15,163,163,0.28);
+  --text: #e6f6f6;
 }
 
 *{box-sizing:border-box}
-body{ margin:0; font-family:"Inter", "Poppins", Arial, sans-serif; color:#e6f6f6;
-  background: linear-gradient(180deg, #071018 0%, #071827 100%); min-height:100vh; display:flex; flex-direction:column; }
+html,body{height:100%}
+body{
+  margin:0; font-family:Inter, Poppins, Arial, sans-serif; color:var(--text);
+  background: linear-gradient(180deg, #04121a 0%, #071827 100%);
+  min-height:100vh; display:flex; flex-direction:column;
+}
 
-.header{ display:flex; align-items:center; gap:16px; padding:18px 24px;
-  background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.02); }
-.logo-wrap img{ width:110px; height:auto; object-fit:contain; border-radius:8px; }
-.header h1{ margin:0; font-size:1.2rem; color:var(--accent); font-weight:700; }
+/* Header */
+.header{
+  display:flex; align-items:center; gap:16px; padding:14px 20px;
+  background: rgba(255,255,255,0.01); border-bottom:1px solid rgba(255,255,255,0.02);
+}
+.logo-wrap img{ width:110px; height:auto; object-fit:contain; border-radius:6px; }
+.header h1{ margin:0; font-size:1.05rem; color:var(--accent); font-weight:700; }
 
-.container{ max-width:1100px; margin:28px auto; padding:20px; border-radius:var(--card-radius);
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); box-shadow: 0 12px 40px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.02); }
+/* Container */
+.container{ max-width:1100px; margin:22px auto; padding:18px; border-radius:var(--card-radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.02);
+}
 
-.form{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
-.input, .select, .btn{ padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); background:var(--glass); color:#e6f6f6; }
-.btn{ cursor:pointer; background:linear-gradient(180deg,var(--accent),var(--accent-2)); color:#042; font-weight:700; border:none; }
+/* Form */
+.form{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+.input, .select, .btn{ padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.03);
+  background:var(--glass); color:var(--text); }
+.btn{ cursor:pointer; background: linear-gradient(180deg,var(--accent),var(--accent-2)); color:#021; font-weight:700; border:none; }
+.input[disabled]{ opacity:0.6 }
 
-.grid{ display:grid; grid-template-columns: 1fr 360px; gap:18px; align-items:start; }
-.card{ background:transparent; padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); }
-.table-wrap{ max-height:480px; overflow:auto; margin-top:8px; border-radius:8px; }
+/* Grid */
+.grid{ display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start; }
+.card{ background:transparent; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); }
+
+/* Table */
+.table-wrap{ max-height:460px; overflow:auto; margin-top:8px; border-radius:8px; }
 table{ width:100%; border-collapse:collapse; font-size:0.95rem; }
 thead th{ position:sticky; top:0; background:rgba(0,0,0,0.2); padding:10px; color:var(--accent); text-align:left; font-weight:700; }
 tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6f6; vertical-align:middle; }
 
+/* Side */
 .side{ display:flex; flex-direction:column; gap:12px; }
 .kpi{ padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.02); }
 .kpi strong{ color:var(--accent); font-size:1.1rem; }
 
+/* Saved days */
 .saved-days{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
 .saved-days button{ padding:8px 10px; background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); border-radius:8px; cursor:pointer; }
 
 #barcodeCanvas{ display:block; margin-top:8px; max-width:100%; height:70px; }
 
-.fade-in{ animation: fadeInUp .34s ease both; }
-@keyframes fadeInUp{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
-.btn:hover{ transform: translateY(-3px); box-shadow: 0 10px 30px rgba(10,120,120,0.08); }
-
-.modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999; }
-.modal{ width:520px; max-width:94%; background:#071018; padding:18px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); }
-
-.footer{ margin-top:auto; padding:14px 18px; text-align:center; font-size:0.9rem; color:var(--muted); background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01)); border-top:1px solid rgba(255,255,255,0.02); }
+/* Footer */
+.footer{ margin-top:auto; padding:10px 12px; text-align:center; font-size:0.9rem; color:var(--muted); border-top:1px solid rgba(255,255,255,0.02); }
 .footer .signature{ display:inline-block; padding:6px 10px; border-radius:8px; transition: box-shadow .36s ease, transform .28s ease, color .28s ease; cursor:default; }
 .footer .signature:hover{ box-shadow: 0 8px 40px var(--footer-glow); transform: translateY(-4px) scale(1.01); color:#fff; }
 
-@media(max-width:980px){ .grid{ grid-template-columns: 1fr; } .logo-wrap img{ width:92px; } }
+/* Responsive */
+@media(max-width:980px){ .grid{ grid-template-columns:1fr; } .logo-wrap img{ width:92px; } }
 </style>
 </head>
 <body>
@@ -74,62 +88,64 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
     <div class="logo-wrap"><img src="LOGO1.png" alt="LOGO1" id="logo1"></div>
     <div>
       <h1>Registro de Propinas · Las Piconas</h1>
-      <div style="font-size:0.86rem; color:#9fb3b3">Sistema profesional — tickets con comprobante y código de barras</div>
+      <div style="font-size:0.86rem; color:var(--muted)">Sistema profesional — tickets con comprobante y código de barras</div>
     </div>
-    <div style="margin-left:auto; font-family:'Courier New', monospace; color:#9fb3b3" id="nowLabel"></div>
+    <div style="margin-left:auto; font-family:'Courier New', monospace; color:var(--muted)" id="nowLabel"></div>
   </div>
 
-  <div class="container fade-in">
+  <div class="container">
     <div class="form">
-      <input id="employee" class="input" placeholder="Nombre del empleado">
-      <input id="amount" class="input" type="number" placeholder="Monto (Q)" step="0.01" style="max-width:160px">
+      <input id="employee" class="input" placeholder="Nombre del empleado" />
+      <input id="amount" class="input" type="number" placeholder="Monto (Q)" step="0.01" style="max-width:160px" />
       <select id="tipType" class="select" style="min-width:140px">
         <option value="Efectivo">Efectivo</option>
         <option value="Tarjeta">Tarjeta</option>
         <option value="Apps">Apps</option>
       </select>
-      <input id="note" class="input" placeholder="Observaciones (opcional)">
+      <input id="note" class="input" placeholder="Observaciones (opcional)" />
       <button id="addTip" class="btn">Registrar</button>
-      <button id="clearForm" class="input" style="background:transparent;color:#9fb3b3">Limpiar</button>
+      <button id="clearForm" class="input" style="background:transparent;color:var(--muted)">Limpiar</button>
     </div>
 
     <div class="grid">
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div><strong>Propinas del día</strong><div style="font-size:0.86rem;color:#9fb3b3">Guardadas por fecha</div></div>
-          <div style="text-align:right"><div style="font-size:0.86rem;color:#9fb3b3">Total hoy</div><strong id="totalToday">Q0.00</strong></div>
+          <div><strong>Propinas del día</strong><div style="font-size:0.86rem;color:var(--muted)">Guardadas por fecha</div></div>
+          <div style="text-align:right"><div style="font-size:0.86rem;color:var(--muted)">Total hoy</div><strong id="totalToday">Q0.00</strong></div>
         </div>
 
         <div class="table-wrap" style="margin-top:10px">
           <table id="tipsTable" aria-live="polite">
-            <thead><tr><th>Empleado</th><th>Monto</th><th>Tipo</th><th>Hora</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Empleado</th><th>Monto</th><th>Tipo</th><th>Hora</th><th style="text-align:right">Acciones</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
 
         <div style="display:flex; gap:8px; margin-top:12px;">
           <button id="exportPdfBtn" class="btn">Exportar (PDF 80mm) y LIMPIAR</button>
-          <button id="genTicketAll" class="input" style="background:transparent;color:#9fb3b3">Generar tickets (día)</button>
+          <button id="genTicketAll" class="input" style="background:transparent;color:var(--muted)">Generar tickets (día)</button>
         </div>
       </div>
 
       <div class="side">
         <div class="kpi">
-          <div><div style="font-size:0.86rem;color:#9fb3b3">Fecha activa</div><strong id="activeDate"></strong></div>
-          <div><div style="font-size:0.86rem;color:#9fb3b3">Registros</div><strong id="countToday">0</strong></div>
+          <div><div style="font-size:0.86rem;color:var(--muted)">Fecha activa</div><strong id="activeDate"></strong></div>
+          <div><div style="font-size:0.86rem;color:var(--muted)">Registros</div><strong id="countToday">0</strong></div>
         </div>
 
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center;"><div><strong>Listas guardadas</strong><div style="font-size:0.86rem;color:#9fb3b3">Cargar por día</div></div></div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><strong>Listas guardadas</strong><div style="font-size:0.86rem;color:var(--muted)">Cargar por día</div></div>
+          </div>
           <div class="saved-days" id="savedDays"></div>
           <div style="margin-top:10px; display:flex; gap:8px;">
-            <button id="deleteDayBtn" class="input" style="background:transparent;color:#9fb3b3">Borrar Día</button>
-            <button id="deleteAllBtn" class="input" style="background:transparent;color:#9fb3b3">Borrar Todo</button>
+            <button id="deleteDayBtn" class="input" style="background:transparent;color:var(--muted)">Borrar Día</button>
+            <button id="deleteAllBtn" class="input" style="background:transparent;color:var(--muted)">Borrar Todo</button>
           </div>
         </div>
 
         <div class="card" style="text-align:center">
-          <div style="font-size:0.86rem;color:#9fb3b3">Ticket seleccionado</div>
+          <div style="font-size:0.86rem;color:var(--muted)">Ticket seleccionado</div>
           <canvas id="barcodeCanvas"></canvas>
           <div style="margin-top:8px"><button id="genTicketBtn" class="btn">Generar Ticket</button></div>
         </div>
@@ -144,34 +160,38 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
     </div>
   </div>
 
-  <div id="modal" class="modal-backdrop" role="dialog" aria-hidden="true">
-    <div class="modal"><div id="modalContent"></div><div style="margin-top:14px; display:flex; justify-content:flex-end; gap:8px;"><button id="modalClose" class="input" style="background:transparent;color:#9fb3b3">Cerrar</button></div></div>
-  </div>
-
+  <!-- Sonidos locales -->
   <audio id="clickSound" src="sounds/CLICK.mp3" preload="auto"></audio>
   <audio id="vozSound" src="sounds/VOZ.mp3" preload="auto"></audio>
 
 <script>
-const STORAGE_KEY = "piconas_tips_by_date_v4";
-const DELETE_SECRET = "22782522";
-const CLOSURE_SECRET = "12345";
+/* ------------------------------
+   Lógica funcional de propinas
+   ------------------------------ */
 
+const STORAGE_KEY = "piconas_tips_by_date_v5";
+const DELETE_SECRET = "22782522"; // para borrar propina (no mostrado)
+const CLOSURE_SECRET = "12345";    // para cierre / exportar (no mostrado)
+
+/* utilidades */
 function uidShort(){ const t = Date.now().toString(36); const r = Math.random().toString(36).slice(2,8); return (t + "-" + r).toUpperCase(); }
 function moneyFormat(v){ const n = Number(v||0); return "Q" + Number(n).toFixed(2); }
 function todayString(){ return (new Date()).toLocaleDateString(); }
 function nowTime(){ return (new Date()).toLocaleTimeString(); }
 function escapeHtml(s){ if(!s) return ""; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+/* estado */
 let activeDate = todayString();
 let tips = [];
 let selectedIdx = null;
 
-/* DOM */
+/* elementos DOM */
 const employeeInput = document.getElementById('employee');
 const amountInput = document.getElementById('amount');
 const noteInput = document.getElementById('note');
 const tipTypeInput = document.getElementById('tipType');
 const addTipBtn = document.getElementById('addTip');
+const clearFormBtn = document.getElementById('clearForm');
 const tipsTableBody = document.querySelector('#tipsTable tbody');
 const totalTodayEl = document.getElementById('totalToday');
 const countTodayEl = document.getElementById('countToday');
@@ -183,147 +203,316 @@ const genTicketBtn = document.getElementById('genTicketBtn');
 const genTicketAllBtn = document.getElementById('genTicketAll');
 const deleteDayBtn = document.getElementById('deleteDayBtn');
 const deleteAllBtn = document.getElementById('deleteAllBtn');
-const modal = document.getElementById('modal');
-const modalContent = document.getElementById('modalContent');
-const modalClose = document.getElementById('modalClose');
 const barcodeCanvas = document.getElementById('barcodeCanvas');
 
 function updateNow(){ nowLabel.textContent = new Date().toLocaleString(); }
 setInterval(updateNow,1000); updateNow();
 
+/* almacenamiento */
 function loadAllStorage(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }catch(e){ console.error(e); return {}; } }
 function saveAllStorage(obj){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }catch(e){ console.error(e); } }
+
 function persistActive(){ const all = loadAllStorage(); all[activeDate] = tips.slice(); saveAllStorage(all); renderSavedDays(); }
 
-function loadActive(date){ activeDate = date || todayString(); activeDateEl.textContent = activeDate; const all = loadAllStorage(); tips = (all[activeDate] && Array.isArray(all[activeDate])) ? all[activeDate].slice() : []; selectedIdx = null; renderTips(); renderSavedDays(); }
+function loadActive(date){
+  activeDate = date || todayString();
+  activeDateEl.textContent = activeDate;
+  const all = loadAllStorage();
+  tips = (all[activeDate] && Array.isArray(all[activeDate])) ? all[activeDate].slice() : [];
+  selectedIdx = null;
+  renderTips();
+  renderSavedDays();
+}
 
-function renderSavedDays(){ savedDaysEl.innerHTML = ""; const all = loadAllStorage(); const keys = Object.keys(all).sort((a,b)=> (new Date(b) - new Date(a))); keys.forEach(k=>{ const btn = document.createElement('button'); btn.textContent = f"{k} ({len(all[k])}"; btn.onclick = ()=> loadActive(k); savedDaysEl.appendChild(btn); }); }
+/* render saved days */
+function renderSavedDays(){
+  savedDaysEl.innerHTML = "";
+  const all = loadAllStorage();
+  const keys = Object.keys(all).sort((a,b)=> (new Date(b) - new Date(a)));
+  keys.forEach(k=>{
+    const btn = document.createElement('button');
+    btn.textContent = `${k} (${ (all[k] || []).length })`;
+    btn.addEventListener('click', ()=> loadActive(k));
+    savedDaysEl.appendChild(btn);
+  });
+}
 
-function renderTips(){ tipsTableBody.innerHTML = ""; let total = 0; tips.forEach((t, idx)=>{ const tr = document.createElement('tr'); tr.dataset.idx = idx; tr.innerHTML = `
+/* render tips table */
+function renderTips(){
+  tipsTableBody.innerHTML = "";
+  let total = 0;
+  tips.forEach((t, idx)=>{
+    const tr = document.createElement('tr');
+    tr.dataset.idx = idx;
+    tr.innerHTML = `
       <td>${escapeHtml(t.employee)}</td>
       <td>${moneyFormat(t.amount)}</td>
       <td>${escapeHtml(t.type)}</td>
       <td>${escapeHtml(t.time)}</td>
       <td style="text-align:right">
-        <button class="input" data-idx="${idx}" onclick="onGenerateTicket(event)">Ticket</button>
-        <button class="input" data-idx="${idx}" onclick="onRequestDelete(event)" style="margin-left:6px;background:transparent;color:#9fb3b3">Borrar</button>
+        <button class="input btn-mini" data-idx="${idx}" data-action="ticket">Ticket</button>
+        <button class="input btn-mini" data-idx="${idx}" data-action="delete" style="margin-left:6px;background:transparent;color:var(--muted)">Borrar</button>
       </td>
-    `; tr.addEventListener('click', ()=> { const prev = tipsTableBody.querySelector('tr.selected'); if(prev) prev.classList.remove('selected'); tr.classList.add('selected'); selectedIdx = idx; try{ JsBarcode(barcodeCanvas, t.code, {format:'CODE128', width:2, height:40, displayValue:true, fontSize:10}); }catch(e){} }); tipsTableBody.appendChild(tr); total += Number(t.amount||0); }); totalTodayEl.textContent = moneyFormat(total); countTodayEl.textContent = String(tips.length); }
-
-function showModal(html){ modalContent.innerHTML = html; modal.style.display = 'flex'; }
-modalClose.addEventListener('click', ()=> modal.style.display = 'none');
-
-addTipBtn.addEventListener('click', ()=>{ const emp = employeeInput.value.trim(); const amt = Number(amountInput.value); const type = tipTypeInput.value; const note = noteInput.value || ""; if(!emp || !amt || isNaN(amt) || amt <= 0){ alert("Ingrese nombre de empleado y monto válido."); return; } const item = { id: uidShort(), code: (uidShort().replace(/-/g,'').slice(0,14)), employee: emp, amount: Number(amt).toFixed(2), type: type, note: note, time: nowTime() }; tips.push(item); persistActive(); renderTips(); try{ document.getElementById('clickSound').currentTime = 0; document.getElementById('clickSound').play(); }catch(e){} employeeInput.value=''; amountInput.value=''; noteInput.value=''; });
-
-window.onRequestDelete = function(e){ e.stopPropagation(); const idx = Number(e.currentTarget.getAttribute('data-idx')); if(!Number.isFinite(idx) || !tips[idx]) return; const promptCode = prompt("Introduzca el código secreto para borrar esta propina:"); if(promptCode === null) return; if(promptCode.trim() === DELETE_SECRET){ tips.splice(idx,1); persistActive(); renderTips(); alert("Propina borrada."); } else { alert("Código incorrecto. No se ha borrado."); } };
-
-window.onGenerateTicket = function(e){ e.stopPropagation(); const idx = Number(e.currentTarget.getAttribute('data-idx')); if(!Number.isFinite(idx) || !tips[idx]) return; generateTicketPDF(tips[idx]); };
-
-async function generateTicketPDF(item){
-    try{
-        if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
-        const { jsPDF } = window.jspdf;
-
-        const img = new Image();
-        img.src = 'LOGO2.jpg';
-        await new Promise(res => { img.onload = res; img.onerror = res; });
-
-        const maxWmm = 66;
-        const dpi = 96;
-        const pxToMm = 25.4 / dpi;
-        let logoWmm = maxWmm;
-        let ratio = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
-        let logoHmm = logoWmm / ratio;
-        if(logoHmm > 50){ logoHmm = 50; logoWmm = logoHmm * ratio; }
-
-        const lineHeight = 5;
-        let estimatedHeight = 8 + logoHmm + 4 + (6 * lineHeight) + 22 + 8;
-        if(!item.note) estimatedHeight -= lineHeight;
-        estimatedHeight = Math.max(80, Math.ceil(estimatedHeight));
-        const doc = new jsPDF({unit:'mm', format:[80, estimatedHeight]});
-        let y = 6;
-
-        try{
-            const x = (80 - logoWmm) / 2;
-            doc.addImage(img, 'JPEG', x, y, logoWmm, logoHmm);
-            y += logoHmm + 4;
-        }catch(e){ y += 2; }
-
-        doc.setFontSize(11); doc.text("Comprobante de Propina", 40, y, {align:'center'}); y += 6;
-        doc.setFontSize(9);
-        doc.text(`Empleado: ${item.employee}`, 8, y); y += 5;
-        doc.text(`Monto: ${moneyFormat(item.amount)}`, 8, y); y += 5;
-        doc.text(`Tipo: ${item.type}`, 8, y); y += 5;
-        doc.text(`Fecha: ${activeDate} ${item.time}`, 8, y); y += 6;
-        doc.text(`Código: ${item.code}`, 8, y); y += 6;
-
-        const c = document.createElement('canvas'); c.width = 520; c.height = 90;
-        try{
-            JsBarcode(c, item.code, {format:'CODE128', width:2, height:40, displayValue:false, margin:2});
-            const dataUrl = c.toDataURL('image/png');
-            const bw = 64; const bx = (80 - bw)/2;
-            doc.addImage(dataUrl, 'PNG', bx, y, bw, 18);
-            y += 22;
-        }catch(e){ console.warn(e); }
-
-        if(item.note){ doc.setFontSize(8); doc.text("Obs: " + item.note, 8, y); y += 6; }
-
-        doc.setFontSize(8); doc.text("Gracias por su servicio", 40, y, {align:'center'}); y += 6;
-
-        doc.save(`ticket_${item.employee.replace(/\s+/g,'_')}_${item.code}.pdf`);
-        try{ document.getElementById('vozSound').currentTime = 0; document.getElementById('vozSound').play(); }catch(e){}
-    }catch(err){ console.error("Error ticket:", err); alert("Error generando ticket (ver consola)."); }
+    `;
+    // click row: select and show barcode
+    tr.addEventListener('click', ()=> {
+      const prev = tipsTableBody.querySelector('tr.selected');
+      if(prev) prev.classList.remove('selected');
+      tr.classList.add('selected');
+      selectedIdx = idx;
+      try{ JsBarcode(barcodeCanvas, t.code, {format:'CODE128', width:2, height:40, displayValue:true, fontSize:10}); }catch(e){}
+    });
+    // delegated button clicks:
+    tr.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        const i = Number(b.getAttribute('data-idx'));
+        const action = b.getAttribute('data-action');
+        if(action === 'ticket'){ generateTicketPDF(tips[i]); }
+        if(action === 'delete'){ requestDelete(i); }
+      });
+    });
+    tipsTableBody.appendChild(tr);
+    total += Number(t.amount||0);
+  });
+  totalTodayEl.textContent = moneyFormat(total);
+  countTodayEl.textContent = String(tips.length);
 }
 
-document.getElementById('genTicketAll').addEventListener('click', async ()=>{ if(!tips.length){ alert("No hay registros hoy."); return; } if(!confirm("Generar ticket individual para cada registro del día?")) return; for(let i=0;i<tips.length;i++){ await generateTicketPDF(tips[i]); await new Promise(r=>setTimeout(r, 220)); } });
-
-exportPdfBtn.addEventListener('click', async ()=>{
-    const all = loadAllStorage();
-    if(Object.keys(all).length === 0){ alert("No hay registros para exportar."); return; }
-    const provided = prompt("Ingrese el código de cierre para exportar e imprimir (código secreto):");
-    if(provided === null) return;
-    if(provided.trim() !== CLOSURE_SECRET){ alert("Código de cierre incorrecto."); return; }
-    if(!confirm("Exportar TODOS los registros y totales a un único PDF (80mm). Después de exportar se ELIMINARÁN TODOS LOS DATOS. ¿Continuar?")) return;
-    try{
-        if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
-        const { jsPDF } = window.jspdf;
-        let rowCount = 0;
-        const dayKeys = Object.keys(all).sort((a,b)=> new Date(a) - new Date(b));
-        dayKeys.forEach(k => rowCount += (all[k] && all[k].length) ? all[k].length : 0);
-        const approxHeight = Math.max(200, 40 + (rowCount * 8) + (dayKeys.length * 14));
-        const doc = new jsPDF({unit:'mm', format:[80, approxHeight]});
-        let y = 6;
-        const logoTop = new Image(); logoTop.src = 'LOGO2.jpg'; await new Promise(res => { logoTop.onload = res; logoTop.onerror = res; });
-        try{ const maxW = 56; const ratio = (logoTop.naturalWidth && logoTop.naturalHeight) ? logoTop.naturalWidth / logoTop.naturalHeight : 1; let w = maxW, h = w / ratio; if(h > 20){ h = 20; w = h * ratio; } const x = (80 - w)/2; doc.addImage(logoTop, 'JPEG', x, y, w, h); y += h + 4; }catch(e){ y += 2; }
-        doc.setFontSize(10); doc.text("Cierre de Propinas · Resumen", 40, y, {align:'center'}); y += 6;
-        doc.setFontSize(8);
-        let grandTotal = 0;
-        for(const day of dayKeys){
-            const arr = all[day];
-            const dayTotal = arr.reduce((s,i)=> s + Number(i.amount||0), 0);
-            doc.setFontSize(9); doc.text(`${day} — ${arr.length} registros — Total: ${moneyFormat(dayTotal)}`, 8, y); y += 6;
-            doc.setFontSize(8);
-            doc.text("Empleado", 8, y); doc.text("Monto", 62, y, {align:'right'}); y += 4;
-            arr.forEach(it => { const emp = it.employee.length > 20 ? it.employee.slice(0,20)+"…" : it.employee; doc.text(emp, 8, y); doc.text(moneyFormat(it.amount), 62, y, {align:'right'}); y += 4; grandTotal += Number(it.amount||0); });
-            y += 6;
-        }
-        doc.setFontSize(10); doc.text("Gran Total: " + moneyFormat(grandTotal), 40, y, {align:'center'}); y += 6;
-        doc.setFontSize(8); doc.text("Cierre realizado: " + new Date().toLocaleString(), 8, y); y += 6;
-        const fn = `Propinas_Cierre_${(new Date()).toISOString().slice(0,10)}.pdf`;
-        doc.save(fn);
-        localStorage.removeItem(STORAGE_KEY); tips = []; loadActive(todayString()); alert("Exportación completada y datos eliminados del sistema.");
-    }catch(err){ console.error("Export error:", err); alert("Error durante la exportación. Revisa la consola."); }
+/* add tip */
+addTipBtn.addEventListener('click', ()=>{
+  const emp = employeeInput.value.trim();
+  const amt = Number(amountInput.value);
+  const type = tipTypeInput.value;
+  const note = noteInput ? (noteInput.value || "") : "";
+  if(!emp || !amt || isNaN(amt) || amt <= 0){ alert("Ingrese nombre de empleado y monto válido."); return; }
+  const item = {
+    id: uidShort(),
+    code: uidShort().replace(/-/g,'').slice(0,14),
+    employee: emp,
+    amount: Number(amt).toFixed(2),
+    type: type,
+    note: note,
+    time: nowTime()
+  };
+  tips.push(item);
+  persistActive();
+  renderTips();
+  try{ clickSound.currentTime = 0; clickSound.play(); }catch(e){}
+  // clear small fields
+  employeeInput.value = '';
+  amountInput.value = '';
+  noteInput.value = '';
+  employeeInput.focus();
 });
 
-document.getElementById('deleteDayBtn').addEventListener('click', ()=>{ const promptKey = prompt("Introduce el código secreto para borrar la fecha " + activeDate + ":"); if(promptKey === null) return; if(promptKey.trim() !== DELETE_SECRET){ alert("Código incorrecto."); return; } if(!confirm("Confirmar borrado del día " + activeDate + "?")) return; const all = loadAllStorage(); delete all[activeDate]; saveAllStorage(all); tips = []; loadActive(todayString()); alert("Día borrado."); });
+/* clear form button */
+clearFormBtn.addEventListener('click', ()=>{
+  employeeInput.value = '';
+  amountInput.value = '';
+  noteInput.value = '';
+  tipTypeInput.value = 'Efectivo';
+  employeeInput.focus();
+});
 
-document.getElementById('deleteAllBtn').addEventListener('click', ()=>{ const promptKey = prompt("Introduce el código secreto para BORRAR TODO:"); if(promptKey === null) return; if(promptKey.trim() !== DELETE_SECRET){ alert("Código incorrecto."); return; } if(!confirm("¿Seguro? Se borrarán todos los registros de todas las fechas.")) return; localStorage.removeItem(STORAGE_KEY); tips = []; loadActive(todayString()); alert("Todos los datos han sido borrados."); });
+/* request delete with secret */
+function requestDelete(idx){
+  if(!Number.isFinite(idx) || !tips[idx]) return;
+  const promptCode = prompt("Introduzca el código secreto para borrar esta propina:");
+  if(promptCode === null) return;
+  if(promptCode.trim() === DELETE_SECRET){
+    tips.splice(idx,1);
+    persistActive();
+    renderTips();
+    alert("Propina borrada.");
+  } else {
+    alert("Código incorrecto. No se ha borrado.");
+  }
+}
 
-function init(){ loadActive(todayString()); } init(); window.onGenerateTicket = window.onGenerateTicket || function(e){}; window.onRequestDelete = window.onRequestDelete || function(e){};
+/* generate single ticket (PDF) */
+async function generateTicketPDF(item){
+  try{
+    if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
+    const { jsPDF } = window.jspdf;
 
-function loadAllStorage(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }catch(e){ console.error(e); return {}; } }
-function saveAllStorage(obj){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }catch(e){ console.error(e); } }
-function persistActive(){ const all = loadAllStorage(); all[activeDate] = tips.slice(); saveAllStorage(all); renderSavedDays(); }
-function loadActive(date){ activeDate = date || todayString(); activeDateEl.textContent = activeDate; const all = loadAllStorage(); tips = (all[activeDate] && Array.isArray(all[activeDate])) ? all[activeDate].slice() : []; selectedIdx = null; renderTips(); renderSavedDays(); }
-function renderSavedDays(){ savedDaysEl.innerHTML = ""; const all = loadAllStorage(); const keys = Object.keys(all).sort((a,b)=> (new Date(b) - new Date(a))); keys.forEach(k=>{ const btn = document.createElement('button'); btn.textContent = f"{k} ({len(all[k])}"; btn.onclick = ()=> loadActive(k); savedDaysEl.appendChild(btn); }); }
-function renderTips(){ tipsTableBody.innerHTML = ""; let total = 0; tips.forEach((t, idx)=>{ const tr = document.createElement('tr'); tr.dataset.idx = idx; tr.innerHTML = `<td>${escapeHtml(t.employee)}</td><td>${moneyFormat(t.amount)}</td><td>${escapeHtml(t.type)}</td><td>${escapeHtml(t.time)}</td><td style="text-align:right"><button class="input" data-idx="${idx}" onclick="onGenerateTicket(event)">Ticket</button><button class="input" data-idx="${idx}" onclick="onRequestDelete(event)" style="margin-left:6px;background:transparent;color:#9fb3b3">Borrar</button></td>`; tr.addEventListener('click', ()=> { const prev = tipsTableBody.querySelector('tr.selected'); if(prev) prev.classList.remove('selected'); tr.classList.add('selected'); selectedIdx = idx; try{ JsBarcode(barcodeCanvas, t.code, {format:'CODE128', width:2, height:40, displayValue:true, fontSize:10}); }catch(e){} }); tipsTableBody.appendChild(tr); total += Number(t.amount||0); }); totalTodayEl.textContent = moneyFormat(total); countTodayEl.textContent = String(tips.length); }
+    // load logo (LOGO2.jpg)
+    const img = new Image();
+    img.src = 'LOGO2.jpg';
+    await new Promise(res => { img.onload = res; img.onerror = res; });
+
+    // calculate logo metrics (mm)
+    const maxWmm = 66;
+    const dpi = 96;
+    const pxToMm = 25.4 / dpi;
+    let logoWmm = maxWmm;
+    let ratio = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
+    let logoHmm = logoWmm / ratio;
+    if(logoHmm > 50){ logoHmm = 50; logoWmm = logoHmm * ratio; }
+
+    // estimate height dynamically
+    const lineHeight = 5;
+    let estimatedHeight = 8 + logoHmm + 4 + (6 * lineHeight) + 22 + 8;
+    if(!item.note) estimatedHeight -= lineHeight;
+    estimatedHeight = Math.max(80, Math.ceil(estimatedHeight));
+    const doc = new jsPDF({unit:'mm', format:[80, estimatedHeight]});
+    let y = 6;
+
+    try{
+      const x = (80 - logoWmm) / 2;
+      doc.addImage(img, 'JPEG', x, y, logoWmm, logoHmm);
+      y += logoHmm + 4;
+    }catch(e){
+      y += 2;
+    }
+
+    doc.setFontSize(11); doc.text("Comprobante de Propina", 40, y, {align:'center'}); y += 6;
+    doc.setFontSize(9);
+    doc.text(`Empleado: ${item.employee}`, 8, y); y += 5;
+    doc.text(`Monto: ${moneyFormat(item.amount)}`, 8, y); y += 5;
+    doc.text(`Tipo: ${item.type}`, 8, y); y += 5;
+    doc.text(`Fecha: ${activeDate} ${item.time}`, 8, y); y += 6;
+    doc.text(`Código: ${item.code}`, 8, y); y += 6;
+
+    // barcode generation on canvas -> image -> PDF
+    const c = document.createElement('canvas'); c.width = 520; c.height = 90;
+    try{
+      JsBarcode(c, item.code, {format:'CODE128', width:2, height:40, displayValue:false, margin:2});
+      const dataUrl = c.toDataURL('image/png');
+      const bw = 64; const bx = (80 - bw)/2;
+      doc.addImage(dataUrl, 'PNG', bx, y, bw, 18);
+      y += 22;
+    }catch(e){
+      console.warn('barcode err', e);
+    }
+
+    if(item.note){
+      doc.setFontSize(8); doc.text("Obs: " + item.note, 8, y); y += 6;
+    }
+
+    doc.setFontSize(8); doc.text("Gracias por su servicio", 40, y, {align:'center'}); y += 6;
+
+    const filename = `ticket_${item.employee.replace(/\s+/g,'_')}_${item.code}.pdf`;
+    doc.save(filename);
+    try{ vozSound.currentTime = 0; vozSound.play(); }catch(e){}
+  }catch(err){
+    console.error("Error ticket:", err);
+    alert("Error generando ticket (ver consola).");
+  }
+}
+
+/* button: generar ticket del selected */
+genTicketBtn.addEventListener('click', ()=>{
+  if(selectedIdx === null || !tips[selectedIdx]){ alert("Seleccione una fila para generar el ticket."); return; }
+  generateTicketPDF(tips[selectedIdx]);
+});
+
+/* generar tickets para todos (iterativo) */
+genTicketAllBtn.addEventListener('click', async ()=>{
+  if(!tips.length){ alert("No hay registros hoy."); return; }
+  if(!confirm("Generar ticket individual para cada registro del día?")) return;
+  for(let i=0;i<tips.length;i++){
+    await generateTicketPDF(tips[i]);
+    await new Promise(r=>setTimeout(r,200));
+  }
+});
+
+/* exportar todos (cierre) — requiere código CLOSURE_SECRET */
+exportPdfBtn.addEventListener('click', async ()=>{
+  const all = loadAllStorage();
+  if(Object.keys(all).length === 0){ alert("No hay registros para exportar."); return; }
+  const provided = prompt("Ingrese el código de cierre para exportar e imprimir (código secreto):");
+  if(provided === null) return;
+  if(provided.trim() !== CLOSURE_SECRET){ alert("Código de cierre incorrecto."); return; }
+  if(!confirm("Exportar TODOS los registros y totales a un único PDF (80mm). Después de exportar se ELIMINARÁN TODOS LOS DATOS. ¿Continuar?")) return;
+
+  try{
+    if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
+    const { jsPDF } = window.jspdf;
+    let rowCount = 0;
+    const dayKeys = Object.keys(all).sort((a,b)=> new Date(a) - new Date(b));
+    dayKeys.forEach(k => rowCount += (all[k] && all[k].length) ? all[k].length : 0);
+    const approxHeight = Math.max(200, 40 + (rowCount * 8) + (dayKeys.length * 14));
+    const doc = new jsPDF({unit:'mm', format:[80, approxHeight]});
+    let y = 6;
+
+    // try to place logo
+    const logoTop = new Image(); logoTop.src = 'LOGO2.jpg';
+    await new Promise(res => { logoTop.onload = res; logoTop.onerror = res; });
+    try{
+      const maxW = 56; const ratio = (logoTop.naturalWidth && logoTop.naturalHeight) ? logoTop.naturalWidth / logoTop.naturalHeight : 1;
+      let w = maxW, h = w / ratio; if(h > 20){ h = 20; w = h * ratio; }
+      const x = (80 - w)/2; doc.addImage(logoTop, 'JPEG', x, y, w, h); y += h + 4;
+    }catch(e){ y += 2; }
+
+    doc.setFontSize(10); doc.text("Cierre de Propinas · Resumen", 40, y, {align:'center'}); y += 6;
+    doc.setFontSize(8);
+    let grandTotal = 0;
+    for(const day of dayKeys){
+      const arr = all[day] || [];
+      const dayTotal = arr.reduce((s,i)=> s + Number(i.amount||0), 0);
+      doc.setFontSize(9); doc.text(`${day} — ${arr.length} registros — Total: ${moneyFormat(dayTotal)}`, 8, y); y += 6;
+      doc.setFontSize(8);
+      doc.text("Empleado", 8, y); doc.text("Monto", 62, y, {align:'right'}); y += 4;
+      arr.forEach(it => {
+        const emp = it.employee.length > 20 ? it.employee.slice(0,20)+"…" : it.employee;
+        doc.text(emp, 8, y);
+        doc.text(moneyFormat(it.amount), 62, y, {align:'right'});
+        y += 4;
+        grandTotal += Number(it.amount||0);
+      });
+      y += 6;
+    }
+
+    doc.setFontSize(10); doc.text("Gran Total: " + moneyFormat(grandTotal), 40, y, {align:'center'}); y += 6;
+    doc.setFontSize(8); doc.text("Cierre realizado: " + new Date().toLocaleString(), 8, y); y += 6;
+    const fn = `Propinas_Cierre_${(new Date()).toISOString().slice(0,10)}.pdf`;
+    doc.save(fn);
+
+    // delete everything after exporting
+    localStorage.removeItem(STORAGE_KEY);
+    tips = [];
+    loadActive(todayString());
+    alert("Exportación completada y datos eliminados del sistema.");
+  }catch(err){
+    console.error("Export error:", err);
+    alert("Error durante la exportación. Revisa la consola.");
+  }
+});
+
+/* borrar día actual (requiere DELETE_SECRET) */
+deleteDayBtn.addEventListener('click', ()=>{
+  const promptKey = prompt("Introduce el código secreto para borrar la fecha " + activeDate + ":");
+  if(promptKey === null) return;
+  if(promptKey.trim() !== DELETE_SECRET){ alert("Código incorrecto."); return; }
+  if(!confirm("Confirmar borrado del día " + activeDate + "?")) return;
+  const all = loadAllStorage();
+  delete all[activeDate];
+  saveAllStorage(all);
+  tips = [];
+  loadActive(todayString());
+  alert("Día borrado.");
+});
+
+/* borrar todo (requiere DELETE_SECRET) */
+deleteAllBtn.addEventListener('click', ()=>{
+  const promptKey = prompt("Introduce el código secreto para BORRAR TODO:");
+  if(promptKey === null) return;
+  if(promptKey.trim() !== DELETE_SECRET){ alert("Código incorrecto."); return; }
+  if(!confirm("¿Seguro? Se borrarán todos los registros de todas las fechas.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  tips = [];
+  loadActive(todayString());
+  alert("Todos los datos han sido borrados.");
+});
+
+/* init */
+function init(){ loadActive(todayString()); renderSavedDays(); }
+init();
+
+/* expose small helpers to console (optional) */
+window._piconas = { loadAllStorage, saveAllStorage };
+
+</script>
+</body>
+</html>
