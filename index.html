@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Registro de Propinas · Las Piconas</title>
 
-<!-- Librerías CDN (dejar si tienes problemas, puedo crear versiones locales) -->
+<!-- jsPDF & JsBarcode desde CDN (si prefieres locales, me dices y lo cambio) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -19,11 +19,9 @@
   --muted:#9fb3b3;
   --glass: rgba(255,255,255,0.02);
   --card-radius:12px;
-  --mono: "Courier New", monospace;
-  --footer-glow: rgba(15,163,163,0.28);
-  --text: #e6f6f6;
+  --text:#e6f6f6;
+  --danger:#ff6b6b;
 }
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -31,12 +29,8 @@ body{
   background: linear-gradient(180deg, #04121a 0%, #071827 100%);
   min-height:100vh; display:flex; flex-direction:column;
 }
-
 /* Header */
-.header{
-  display:flex; align-items:center; gap:16px; padding:14px 20px;
-  background: rgba(255,255,255,0.01); border-bottom:1px solid rgba(255,255,255,0.02);
-}
+.header{ display:flex; align-items:center; gap:16px; padding:14px 20px; background: rgba(255,255,255,0.01); border-bottom:1px solid rgba(255,255,255,0.02); }
 .logo-wrap img{ width:110px; height:auto; object-fit:contain; border-radius:6px; }
 .header h1{ margin:0; font-size:1.05rem; color:var(--accent); font-weight:700; }
 
@@ -48,8 +42,7 @@ body{
 
 /* Form */
 .form{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
-.input, .select, .btn{ padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.03);
-  background:var(--glass); color:var(--text); }
+.input, .select, .btn{ padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); background:var(--glass); color:var(--text); }
 .btn{ cursor:pointer; background: linear-gradient(180deg,var(--accent),var(--accent-2)); color:#021; font-weight:700; border:none; }
 .input[disabled]{ opacity:0.6 }
 
@@ -72,15 +65,29 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
 .saved-days{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
 .saved-days button{ padding:8px 10px; background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); border-radius:8px; cursor:pointer; }
 
+/* Barcode canvas */
 #barcodeCanvas{ display:block; margin-top:8px; max-width:100%; height:70px; }
 
 /* Footer */
 .footer{ margin-top:auto; padding:10px 12px; text-align:center; font-size:0.9rem; color:var(--muted); border-top:1px solid rgba(255,255,255,0.02); }
 .footer .signature{ display:inline-block; padding:6px 10px; border-radius:8px; transition: box-shadow .36s ease, transform .28s ease, color .28s ease; cursor:default; }
-.footer .signature:hover{ box-shadow: 0 8px 40px var(--footer-glow); transform: translateY(-4px) scale(1.01); color:#fff; }
+.footer .signature:hover{ box-shadow: 0 8px 40px rgba(15,163,163,0.28); transform: translateY(-4px) scale(1.01); color:#fff; }
 
-/* Responsive */
-@media(max-width:980px){ .grid{ grid-template-columns:1fr; } .logo-wrap img{ width:92px; } }
+/* Modal (historial) */
+.modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999; }
+.modal{ width:720px; max-width:94%; max-height:86vh; overflow:auto; background:#071018; padding:18px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); transform: translateY(12px); opacity:0; transition: all .26s cubic-bezier(.22,.9,.3,1); }
+.modal.show{ transform:none; opacity:1; }
+
+/* Session blocked overlay */
+#sessionBlock{ position:fixed; inset:0; background:rgba(0,0,0,0.72); display:none; z-index:10000; align-items:center; justify-content:center; color:#fff; padding:18px; text-align:center; }
+.sessionBox{ background:#071018; padding:20px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); max-width:520px; }
+
+/* small helpers */
+.small{ font-size:0.88rem; color:var(--muted); }
+.compact-history{ margin-top:10px; font-size:0.88rem; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; }
+.compact-card{ background:rgba(255,255,255,0.02); padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
+
+@media(max-width:980px){ .grid{ grid-template-columns:1fr; } .logo-wrap img{ width:92px; } .modal{ width:92%; } }
 </style>
 </head>
 <body>
@@ -88,12 +95,12 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
     <div class="logo-wrap"><img src="LOGO1.png" alt="LOGO1" id="logo1"></div>
     <div>
       <h1>Registro de Propinas · Las Piconas</h1>
-      <div style="font-size:0.86rem; color:var(--muted)">Sistema profesional — tickets con comprobante y código de barras</div>
+      <div class="small">Sistema profesional — tickets con comprobante y código de barras</div>
     </div>
     <div style="margin-left:auto; font-family:'Courier New', monospace; color:var(--muted)" id="nowLabel"></div>
   </div>
 
-  <div class="container">
+  <div class="container" id="mainApp">
     <div class="form">
       <input id="employee" class="input" placeholder="Nombre del empleado" />
       <input id="amount" class="input" type="number" placeholder="Monto (Q)" step="0.01" style="max-width:160px" />
@@ -110,8 +117,8 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
     <div class="grid">
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div><strong>Propinas del día</strong><div style="font-size:0.86rem;color:var(--muted)">Guardadas por fecha</div></div>
-          <div style="text-align:right"><div style="font-size:0.86rem;color:var(--muted)">Total hoy</div><strong id="totalToday">Q0.00</strong></div>
+          <div><strong>Propinas del día</strong><div class="small">Guardadas por fecha</div></div>
+          <div style="text-align:right"><div class="small">Total hoy</div><strong id="totalToday">Q0.00</strong></div>
         </div>
 
         <div class="table-wrap" style="margin-top:10px">
@@ -121,21 +128,25 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
           </table>
         </div>
 
-        <div style="display:flex; gap:8px; margin-top:12px;">
+        <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
           <button id="exportPdfBtn" class="btn">Exportar (PDF 80mm) y LIMPIAR</button>
           <button id="genTicketAll" class="input" style="background:transparent;color:var(--muted)">Generar tickets (día)</button>
+          <button id="openHistoryBtn" class="input" style="background:transparent;color:var(--muted); margin-left:auto">Ver Historial</button>
         </div>
+
+        <!-- resumen compacto de historial (últimos 3) -->
+        <div class="compact-history" id="compactHistory"></div>
       </div>
 
       <div class="side">
         <div class="kpi">
-          <div><div style="font-size:0.86rem;color:var(--muted)">Fecha activa</div><strong id="activeDate"></strong></div>
-          <div><div style="font-size:0.86rem;color:var(--muted)">Registros</div><strong id="countToday">0</strong></div>
+          <div><div class="small">Fecha activa</div><strong id="activeDate"></strong></div>
+          <div><div class="small">Registros</div><strong id="countToday">0</strong></div>
         </div>
 
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div><strong>Listas guardadas</strong><div style="font-size:0.86rem;color:var(--muted)">Cargar por día</div></div>
+            <div><strong>Listas guardadas</strong><div class="small">Cargar por día</div></div>
           </div>
           <div class="saved-days" id="savedDays"></div>
           <div style="margin-top:10px; display:flex; gap:8px;">
@@ -145,7 +156,7 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
         </div>
 
         <div class="card" style="text-align:center">
-          <div style="font-size:0.86rem;color:var(--muted)">Ticket seleccionado</div>
+          <div class="small">Ticket seleccionado</div>
           <canvas id="barcodeCanvas"></canvas>
           <div style="margin-top:8px"><button id="genTicketBtn" class="btn">Generar Ticket</button></div>
         </div>
@@ -160,32 +171,55 @@ tbody td{ padding:10px; border-top:1px solid rgba(255,255,255,0.02); color:#dff6
     </div>
   </div>
 
-  <!-- Sonidos locales -->
+  <!-- modal historial -->
+  <div id="historyModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" id="historyBox">
+      <h2>Historial de cierres</h2>
+      <div id="historyList" style="margin-top:12px"></div>
+      <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+        <button id="clearHistoryBtn" class="input" style="background:transparent;color:var(--muted)">Limpiar historial</button>
+        <button id="closeHistoryBtn" class="input" style="background:transparent;color:var(--muted)">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- session blocked overlay -->
+  <div id="sessionBlock" style="display:none;align-items:center;justify-content:center;">
+    <div class="sessionBox">
+      <h3>Sesión activa detectada</h3>
+      <p class="small">El sistema ya está abierto en otra pestaña o ventana. Para evitar inconsistencias solo se permite una sesión activa.</p>
+      <p class="small">Si necesitas tomar control desde esta ventana, puedes forzar la toma (requiere clave administrativa).</p>
+      <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
+        <button id="forceTakeBtn" class="btn">Forzar toma (admin)</button>
+        <button id="retryCheckBtn" class="input" style="background:transparent;color:var(--muted)">Volver a comprobar</button>
+      </div>
+      <div style="margin-top:10px;"><button id="openExistingBtn" class="input" style="background:transparent;color:var(--muted)">Mostrar pestaña existente (si está visible)</button></div>
+    </div>
+  </div>
+
+  <!-- Sonidos -->
   <audio id="clickSound" src="sounds/CLICK.mp3" preload="auto"></audio>
   <audio id="vozSound" src="sounds/VOZ.mp3" preload="auto"></audio>
 
 <script>
-/* ------------------------------
-   Lógica funcional de propinas
-   ------------------------------ */
+/* -------------------------------------------------------------------------
+   Código principal (extensión del que ya te funcionaba)
+   - agrega historial de cierres (localStorage)
+   - agrega mecanismo de "sesión única" (lock + BroadcastChannel alert)
+   ------------------------------------------------------------------------- */
 
-const STORAGE_KEY = "piconas_tips_by_date_v5";
-const DELETE_SECRET = "22782522"; // para borrar propina (no mostrado)
-const CLOSURE_SECRET = "12345";    // para cierre / exportar (no mostrado)
+const STORAGE_KEY = "piconas_tips_by_date_v6";
+const HISTORY_KEY = "piconas_closure_history_v1";
+const DELETE_SECRET = "22782522";
+const CLOSURE_SECRET = "12345";
 
-/* utilidades */
 function uidShort(){ const t = Date.now().toString(36); const r = Math.random().toString(36).slice(2,8); return (t + "-" + r).toUpperCase(); }
 function moneyFormat(v){ const n = Number(v||0); return "Q" + Number(n).toFixed(2); }
 function todayString(){ return (new Date()).toLocaleDateString(); }
 function nowTime(){ return (new Date()).toLocaleTimeString(); }
 function escapeHtml(s){ if(!s) return ""; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* estado */
-let activeDate = todayString();
-let tips = [];
-let selectedIdx = null;
-
-/* elementos DOM */
+/* DOM */
 const employeeInput = document.getElementById('employee');
 const amountInput = document.getElementById('amount');
 const noteInput = document.getElementById('note');
@@ -205,15 +239,38 @@ const deleteDayBtn = document.getElementById('deleteDayBtn');
 const deleteAllBtn = document.getElementById('deleteAllBtn');
 const barcodeCanvas = document.getElementById('barcodeCanvas');
 
+const openHistoryBtn = document.getElementById('openHistoryBtn');
+const historyModal = document.getElementById('historyModal');
+const historyBox = document.getElementById('historyBox');
+const historyList = document.getElementById('historyList');
+const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+const compactHistory = document.getElementById('compactHistory');
+
+const sessionBlock = document.getElementById('sessionBlock');
+const forceTakeBtn = document.getElementById('forceTakeBtn');
+const retryCheckBtn = document.getElementById('retryCheckBtn');
+const openExistingBtn = document.getElementById('openExistingBtn');
+
+let activeDate = todayString();
+let tips = [];
+let selectedIdx = null;
+
+/* now label */
 function updateNow(){ nowLabel.textContent = new Date().toLocaleString(); }
 setInterval(updateNow,1000); updateNow();
 
-/* almacenamiento */
+/* storage helpers */
 function loadAllStorage(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }catch(e){ console.error(e); return {}; } }
 function saveAllStorage(obj){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }catch(e){ console.error(e); } }
 
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }catch(e){ console.error(e); return []; } }
+function saveHistory(arr){ try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); }catch(e){ console.error(e); } }
+
+/* persist active day */
 function persistActive(){ const all = loadAllStorage(); all[activeDate] = tips.slice(); saveAllStorage(all); renderSavedDays(); }
 
+/* load day */
 function loadActive(date){
   activeDate = date || todayString();
   activeDateEl.textContent = activeDate;
@@ -222,9 +279,10 @@ function loadActive(date){
   selectedIdx = null;
   renderTips();
   renderSavedDays();
+  renderCompactHistory();
 }
 
-/* render saved days */
+/* saved days UI */
 function renderSavedDays(){
   savedDaysEl.innerHTML = "";
   const all = loadAllStorage();
@@ -254,7 +312,6 @@ function renderTips(){
         <button class="input btn-mini" data-idx="${idx}" data-action="delete" style="margin-left:6px;background:transparent;color:var(--muted)">Borrar</button>
       </td>
     `;
-    // click row: select and show barcode
     tr.addEventListener('click', ()=> {
       const prev = tipsTableBody.querySelector('tr.selected');
       if(prev) prev.classList.remove('selected');
@@ -262,7 +319,6 @@ function renderTips(){
       selectedIdx = idx;
       try{ JsBarcode(barcodeCanvas, t.code, {format:'CODE128', width:2, height:40, displayValue:true, fontSize:10}); }catch(e){}
     });
-    // delegated button clicks:
     tr.querySelectorAll('button').forEach(b => {
       b.addEventListener('click', (ev)=>{
         ev.stopPropagation();
@@ -299,14 +355,13 @@ addTipBtn.addEventListener('click', ()=>{
   persistActive();
   renderTips();
   try{ clickSound.currentTime = 0; clickSound.play(); }catch(e){}
-  // clear small fields
   employeeInput.value = '';
   amountInput.value = '';
   noteInput.value = '';
   employeeInput.focus();
 });
 
-/* clear form button */
+/* clear form */
 clearFormBtn.addEventListener('click', ()=>{
   employeeInput.value = '';
   amountInput.value = '';
@@ -315,7 +370,7 @@ clearFormBtn.addEventListener('click', ()=>{
   employeeInput.focus();
 });
 
-/* request delete with secret */
+/* delete request - needs DELETE_SECRET */
 function requestDelete(idx){
   if(!Number.isFinite(idx) || !tips[idx]) return;
   const promptCode = prompt("Introduzca el código secreto para borrar esta propina:");
@@ -330,27 +385,22 @@ function requestDelete(idx){
   }
 }
 
-/* generate single ticket (PDF) */
+/* ticket generation (single) */
 async function generateTicketPDF(item){
   try{
     if(!(window.jspdf && window.jspdf.jsPDF)){ alert("jsPDF no disponible."); return; }
     const { jsPDF } = window.jspdf;
-
-    // load logo (LOGO2.jpg)
     const img = new Image();
     img.src = 'LOGO2.jpg';
     await new Promise(res => { img.onload = res; img.onerror = res; });
 
-    // calculate logo metrics (mm)
     const maxWmm = 66;
     const dpi = 96;
-    const pxToMm = 25.4 / dpi;
     let logoWmm = maxWmm;
     let ratio = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
     let logoHmm = logoWmm / ratio;
     if(logoHmm > 50){ logoHmm = 50; logoWmm = logoHmm * ratio; }
 
-    // estimate height dynamically
     const lineHeight = 5;
     let estimatedHeight = 8 + logoHmm + 4 + (6 * lineHeight) + 22 + 8;
     if(!item.note) estimatedHeight -= lineHeight;
@@ -362,9 +412,7 @@ async function generateTicketPDF(item){
       const x = (80 - logoWmm) / 2;
       doc.addImage(img, 'JPEG', x, y, logoWmm, logoHmm);
       y += logoHmm + 4;
-    }catch(e){
-      y += 2;
-    }
+    }catch(e){ y += 2; }
 
     doc.setFontSize(11); doc.text("Comprobante de Propina", 40, y, {align:'center'}); y += 6;
     doc.setFontSize(9);
@@ -374,7 +422,6 @@ async function generateTicketPDF(item){
     doc.text(`Fecha: ${activeDate} ${item.time}`, 8, y); y += 6;
     doc.text(`Código: ${item.code}`, 8, y); y += 6;
 
-    // barcode generation on canvas -> image -> PDF
     const c = document.createElement('canvas'); c.width = 520; c.height = 90;
     try{
       JsBarcode(c, item.code, {format:'CODE128', width:2, height:40, displayValue:false, margin:2});
@@ -382,9 +429,7 @@ async function generateTicketPDF(item){
       const bw = 64; const bx = (80 - bw)/2;
       doc.addImage(dataUrl, 'PNG', bx, y, bw, 18);
       y += 22;
-    }catch(e){
-      console.warn('barcode err', e);
-    }
+    }catch(e){ console.warn(e); }
 
     if(item.note){
       doc.setFontSize(8); doc.text("Obs: " + item.note, 8, y); y += 6;
@@ -401,13 +446,13 @@ async function generateTicketPDF(item){
   }
 }
 
-/* button: generar ticket del selected */
+/* genTicket for selected row */
 genTicketBtn.addEventListener('click', ()=>{
   if(selectedIdx === null || !tips[selectedIdx]){ alert("Seleccione una fila para generar el ticket."); return; }
   generateTicketPDF(tips[selectedIdx]);
 });
 
-/* generar tickets para todos (iterativo) */
+/* generate all tickets */
 genTicketAllBtn.addEventListener('click', async ()=>{
   if(!tips.length){ alert("No hay registros hoy."); return; }
   if(!confirm("Generar ticket individual para cada registro del día?")) return;
@@ -417,7 +462,7 @@ genTicketAllBtn.addEventListener('click', async ()=>{
   }
 });
 
-/* exportar todos (cierre) — requiere código CLOSURE_SECRET */
+/* ------------ CIERRE / EXPORT (agregamos historial) ------------ */
 exportPdfBtn.addEventListener('click', async ()=>{
   const all = loadAllStorage();
   if(Object.keys(all).length === 0){ alert("No hay registros para exportar."); return; }
@@ -436,7 +481,6 @@ exportPdfBtn.addEventListener('click', async ()=>{
     const doc = new jsPDF({unit:'mm', format:[80, approxHeight]});
     let y = 6;
 
-    // try to place logo
     const logoTop = new Image(); logoTop.src = 'LOGO2.jpg';
     await new Promise(res => { logoTop.onload = res; logoTop.onerror = res; });
     try{
@@ -469,6 +513,20 @@ exportPdfBtn.addEventListener('click', async ()=>{
     const fn = `Propinas_Cierre_${(new Date()).toISOString().slice(0,10)}.pdf`;
     doc.save(fn);
 
+    // Guardar resumen en historial (fecha, hora, total, cantidad)
+    const history = loadHistory();
+    history.unshift({
+      id: uidShort(),
+      date: (new Date()).toLocaleDateString(),
+      time: (new Date()).toLocaleTimeString(),
+      total: grandTotal,
+      count: rowCount
+    });
+    // limit history to last 200 records (evitar crecimiento infinito)
+    while(history.length > 200) history.pop();
+    saveHistory(history);
+    renderCompactHistory();
+
     // delete everything after exporting
     localStorage.removeItem(STORAGE_KEY);
     tips = [];
@@ -480,7 +538,7 @@ exportPdfBtn.addEventListener('click', async ()=>{
   }
 });
 
-/* borrar día actual (requiere DELETE_SECRET) */
+/* borrar día actual (DELETE_SECRET) */
 deleteDayBtn.addEventListener('click', ()=>{
   const promptKey = prompt("Introduce el código secreto para borrar la fecha " + activeDate + ":");
   if(promptKey === null) return;
@@ -494,7 +552,7 @@ deleteDayBtn.addEventListener('click', ()=>{
   alert("Día borrado.");
 });
 
-/* borrar todo (requiere DELETE_SECRET) */
+/* borrar todo (DELETE_SECRET) */
 deleteAllBtn.addEventListener('click', ()=>{
   const promptKey = prompt("Introduce el código secreto para BORRAR TODO:");
   if(promptKey === null) return;
@@ -506,13 +564,236 @@ deleteAllBtn.addEventListener('click', ()=>{
   alert("Todos los datos han sido borrados.");
 });
 
-/* init */
-function init(){ loadActive(todayString()); renderSavedDays(); }
-init();
+/* -------------------------
+   Historial modal controls
+   ------------------------- */
+openHistoryBtn.addEventListener('click', ()=> {
+  renderHistoryModal();
+  historyModal.style.display = 'flex';
+  setTimeout(()=> historyBox.classList.add('show'), 10);
+});
+closeHistoryBtn.addEventListener('click', ()=> {
+  historyBox.classList.remove('show');
+  setTimeout(()=> historyModal.style.display = 'none', 260);
+});
+clearHistoryBtn.addEventListener('click', ()=> {
+  if(!confirm('Limpiar todo el historial de cierres? Esta acción es irreversible.')) return;
+  saveHistory([]);
+  renderHistoryModal();
+  renderCompactHistory();
+});
 
-/* expose small helpers to console (optional) */
-window._piconas = { loadAllStorage, saveAllStorage };
+/* render historial en modal */
+function renderHistoryModal(){
+  const history = loadHistory();
+  if(!history || history.length === 0){
+    historyList.innerHTML = '<div class="small">No hay cierres registrados.</div>';
+    return;
+  }
+  historyList.innerHTML = '';
+  const ul = document.createElement('div');
+  history.slice(0,200).forEach(h=>{
+    const d = document.createElement('div');
+    d.className = 'small';
+    d.style.padding = '8px';
+    d.style.borderBottom = '1px solid rgba(255,255,255,0.02)';
+    d.innerHTML = `<strong>${h.date} ${h.time}</strong> — Total: ${moneyFormat(h.total)} — Items: ${h.count}`;
+    ul.appendChild(d);
+  });
+  historyList.appendChild(ul);
+}
 
+/* compact history (last 3) shown under main card */
+function renderCompactHistory(){
+  const history = loadHistory();
+  compactHistory.innerHTML = '';
+  if(!history || history.length === 0){
+    compactHistory.innerHTML = '<div class="small">Sin cierres recientes.</div>';
+    return;
+  }
+  history.slice(0,3).forEach(h=>{
+    const card = document.createElement('div');
+    card.className = 'compact-card';
+    card.innerHTML = `<div style="font-weight:700">${h.date}</div><div class="small">${h.time} — ${moneyFormat(h.total)}</div>`;
+    compactHistory.appendChild(card);
+  });
+}
+
+/* -------------------------
+   Sesión única (lock + BroadcastChannel)
+   - lock stored in localStorage under "piconas_lock"
+   - active tab refreshes lock periodically
+   - new tabs detect lock and show overlay
+   ------------------------- */
+
+const INSTANCE_ID = uidShort();
+const LOCK_KEY = 'piconas_lock_v1';
+const LOCK_TTL = 5000; // ms - consider active if updated within this
+let lockInterval = null;
+let isActiveSession = false;
+let bc = null;
+
+/* helper to set lock (active tab) */
+function claimLock(){
+  const payload = { id: INSTANCE_ID, ts: Date.now() };
+  localStorage.setItem(LOCK_KEY, JSON.stringify(payload));
+  // broadcast presence
+  try{ if(!bc) bc = new BroadcastChannel('piconas_channel'); bc.postMessage({ type:'i-am-active', id: INSTANCE_ID }); }catch(e){}
+  isActiveSession = true;
+  // refresh every 2s
+  if(lockInterval) clearInterval(lockInterval);
+  lockInterval = setInterval(()=> {
+    const p = { id: INSTANCE_ID, ts: Date.now() };
+    try{ localStorage.setItem(LOCK_KEY, JSON.stringify(p)); }catch(e){}
+    try{ if(bc) bc.postMessage({ type:'i-am-active', id: INSTANCE_ID }); }catch(e){}
+  }, 2000);
+}
+
+/* release lock (on unload) */
+function releaseLock(){
+  try{
+    const cur = JSON.parse(localStorage.getItem(LOCK_KEY) || '{}');
+    if(cur && cur.id === INSTANCE_ID){
+      localStorage.removeItem(LOCK_KEY);
+      try{ if(bc) bc.postMessage({ type:'i-am-not-active', id: INSTANCE_ID }); }catch(e){}
+    }
+  }catch(e){}
+  isActiveSession = false;
+  if(lockInterval) clearInterval(lockInterval);
+}
+
+/* check lock and act accordingly (called on load) */
+function checkLockOnStart(){
+  try{
+    const raw = localStorage.getItem(LOCK_KEY);
+    if(!raw){
+      // no lock -> take it
+      claimLock();
+      return true;
+    }
+    const obj = JSON.parse(raw);
+    const age = Date.now() - (obj.ts || 0);
+    if(age > LOCK_TTL){
+      // stale -> takeover
+      claimLock();
+      return true;
+    }
+    // exists and fresh -> another tab active
+    showSessionBlocked();
+    // ping active tab to notify (using BroadcastChannel)
+    try{ if(!bc) bc = new BroadcastChannel('piconas_channel'); bc.postMessage({ type:'ping-new-tab', from: INSTANCE_ID }); }catch(e){}
+    return false;
+  }catch(e){
+    claimLock();
+    return true;
+  }
+}
+
+/* show overlay blocking UI in new tab */
+function showSessionBlocked(){
+  sessionBlock.style.display = 'flex';
+  // disable main app interactions
+  document.getElementById('mainApp').style.filter = 'blur(2px) brightness(.6)';
+}
+
+/* hide overlay when takeover done */
+function hideSessionBlocked(){
+  sessionBlock.style.display = 'none';
+  document.getElementById('mainApp').style.filter = '';
+}
+
+/* BroadcastChannel message handling */
+function setupBroadcast(){
+  try{
+    if(!bc) bc = new BroadcastChannel('piconas_channel');
+    bc.onmessage = (ev) => {
+      const msg = ev.data;
+      if(!msg || !msg.type) return;
+      if(msg.type === 'ping-new-tab'){
+        // a new tab asks for attention -> flash title
+        flashTitleOnce('Otra sesión quiere acceso');
+      }
+      if(msg.type === 'i-am-active'){
+        // someone announces they are active - if we are also active and not same id, decide (keep existing)
+        // no action necessary
+      }
+      if(msg.type === 'force-take' && msg.from){
+        // another tab forced takeover -> if it's not us, and we were active, release lock
+        if(msg.from !== INSTANCE_ID){
+          // if we were active, and another asks to take, release
+          if(isActiveSession){
+            releaseLock();
+          }
+        }
+      }
+    };
+  }catch(e){
+    // BroadcastChannel may not be available in some environments
+    console.warn('BroadcastChannel not available', e);
+  }
+}
+
+/* flash title as attention getter */
+let originalTitle = document.title;
+let flashTimer = null;
+function flashTitleOnce(msg){
+  let times = 0;
+  if(flashTimer) clearInterval(flashTimer);
+  flashTimer = setInterval(()=> {
+    document.title = (document.title === originalTitle) ? msg : originalTitle;
+    times++;
+    if(times > 6){ clearInterval(flashTimer); document.title = originalTitle; }
+  }, 500);
+}
+
+/* force takeover action (from blocked tab) */
+forceTakeBtn.addEventListener('click', ()=>{
+  const code = prompt('Introduzca clave administrativa para forzar toma de la sesión (no se muestra):');
+  if(code === null) return;
+  if(code.trim() !== DELETE_SECRET){ alert('Clave incorrecta.'); return; }
+  // announce takeover and claim lock
+  try{ if(!bc) bc = new BroadcastChannel('piconas_channel'); bc.postMessage({ type:'force-take', from: INSTANCE_ID }); }catch(e){}
+  claimLock();
+  hideSessionBlocked();
+  alert('Has forzado la toma de la sesión desde esta pestaña.');
+});
+
+/* retry check button */
+retryCheckBtn.addEventListener('click', ()=> {
+  const ok = checkLockOnStart();
+  if(ok) {
+    hideSessionBlocked();
+    alert('Esta pestaña ahora es la sesión activa.');
+  } else {
+    alert('Aún hay una sesión activa en otra pestaña. Intenta forzar si tienes clave admin.');
+  }
+});
+
+/* openExistingBtn: tries to notify existing tab to show itself (flash title) */
+openExistingBtn.addEventListener('click', ()=> {
+  try{ if(!bc) bc = new BroadcastChannel('piconas_channel'); bc.postMessage({ type:'ping-new-tab', from: INSTANCE_ID }); }catch(e){}
+  alert('Se ha notificado a la sesión activa para que llame tu atención (si está en el mismo navegador).');
+});
+
+/* cleanup on unload */
+window.addEventListener('beforeunload', ()=> {
+  releaseLock();
+});
+
+/* initialize BC and lock on start */
+setupBroadcast();
+checkLockOnStart(); // takes lock if none or stale
+
+/* -------------------------
+   Historial UI initial render
+   ------------------------- */
+renderCompactHistory();
+loadActive(todayString());
+
+/* expose small helpers */
+window._piconas = { loadAllStorage, saveAllStorage, loadHistory, saveHistory };
+
+/* end of script */
 </script>
 </body>
 </html>
